@@ -1,127 +1,108 @@
-# Cozy Power-Wash Rooster — 3D Character Asset Package
+# Cozy Power-Wash 3D Character Assets (`3dmodels`)
 
-A stylized, hand-painted-look **Rooster** 3D character asset designed, modeled, rigged, shaded, and animated in **Blender 5.2** for a **Cozy Power-Wash Game**.
-
----
-
-## 1. Exported Files in `C:\3dassets\argon`
-
-| File | Format | Size | Rigged | Animated | Materials | Best Used For |
-| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
-| `cozy_powerwash_rooster.blend` | **Blender 5.2 Native** | ~718 KB | Yes | Yes (7 Actions + NLA) | Yes (14 Procedural Node Shaders) | Master source file, editing geometry, tweaking animations, re-exporting |
-| `cozy_powerwash_rooster.glb` | **glTF 2.0 Binary** | ~1.25 MB | Yes | Yes (All 7 Clips) | Yes | **Godot 4, Three.js, Babylon.js, Unreal Engine 5, Unity (glTFast), WebGL** |
-| `cozy_powerwash_rooster.gltf` + `.bin` | **glTF 2.0 Separate** | ~1.31 MB | Yes | Yes (All 7 Clips) | Yes | Inspectable JSON glTF pipelines & custom engine importers |
-| `cozy_powerwash_rooster.fbx` | **Autodesk FBX** | ~1.80 MB | Yes | Yes (Baked Actions + NLA) | Yes | **Unity, Unreal Engine 5, Maya, 3ds Max, Houdini** |
-| `cozy_powerwash_rooster.usdc` | **Universal Scene Description (USD)** | ~1.09 MB | Yes | Yes | Yes | **NVIDIA Omniverse, Unreal Engine 5 Stage, Apple Reality Composer, Solaris** |
-| `cozy_powerwash_rooster.abc` | **Alembic Cache** | ~25.7 MB | Vertex Cache | Yes (Frames 1–80) | Material Slots | VFX vertex-cache playback, Cinema 4D, Houdini, Katana |
-| `cozy_powerwash_rooster.obj` + `.mtl` | **Wavefront OBJ + MTL** | ~1.70 MB | Static | Static | Yes | Static prop placement, ZBrush, Substance Painter, Marmoset Toolbag |
-| `cozy_powerwash_rooster.ply` | **Stanford PLY** | ~2.58 MB | Static | Static | Normals + UVs | Point-cloud/mesh inspection, academic/procedural pipelines |
-| `cozy_powerwash_rooster.stl` | **Stereolithography STL** | ~1.61 MB | Static | Static | Geometry Only | 3D printing, collision hull generation, static mesh slicing |
+This repository contains stylized, game-ready **3D Character Assets** modeled, rigged, shaded, and animated in **Blender 5.2** for a **Cozy Power-Wash Game**:
+1. **Expressive Low-Poly Shiba Inu (`cozy_shiba_inu.*`)** — Faceted origami/papercraft-style Shiba Inu companion with a **34-bone expressive quadruped + facial rig** and **15 interactive animations** (sitting smile, petting head bliss, belly rub roll-over, double bark, fetch play-bow, gallop, ball pickup/drop, water-spray chomp, shake-off water, paw trick, ear scratch, sniffing dirt, and curled nap).
+2. **Stylized Rooster (`cozy_powerwash_rooster.*`)** — Layered shingle-feathered Rooster with a **28-bone rig** and **7 animations** (idle look-around, peck & scratch, proud walk strut, startled hop, shake-off water, panic run flee, and celebratory crow).
 
 ---
 
-## 2. Geometry & Topology Specifications
+# Part 1: Expressive Low-Poly Shiba Inu (`cozy_shiba_inu`)
 
-- **Object Name:** `Rooster_Mesh`
-- **Collection:** `Cozy_Rooster`
-- **Vertex Count:** `16,774` vertices
-- **Polygon / Face Count:** `18,828` faces (quad-dominant lofted feather cards, body tubes, and anatomical meshes)
-- **Scale & Orientation:**
-  - Real-world stylized game proportions (~`1.10 m` tall from toe to comb tips, ~`0.95 m` nose-to-tail).
-  - Centered at world origin `(0, 0, 0)` with feet planted on `Z = 0.0`.
-  - Forward Axis: `-Y` (Blender standard) | Up Axis: `+Z`.
-- **Anatomical & Stylized Features:**
-  - **Plump Deep-Breasted Body:** Deep indigo-navy blue puffed chest, keel, and lower belly with 3 rows of overlapping breast shingle feathers.
-  - **7-Tier Fiery Hackle Cape:** 102 individually oriented overlapping shingle feathers cascading from crimson-red at the nape through fiery orange to a jagged bright golden-orange pointed fringe overlapping the blue breast.
-  - **7-Row Scalloped Saddle & Rump Plumage:** 73 overlapping red-orange scalloped feathers blanketing the upper back, saddle, and rear flanks down to the tail base.
-  - **3-Tone Layered Scalloped Wings (Left & Right):**
-    - *Row 1 (Shoulder Bow):* 6 deep indigo-navy covert feathers per wing.
-    - *Rows 2 & 3 (Middle Coverts):* 12 ruby-crimson scalloped covert feathers per wing.
-    - *Row 4 (Primaries):* 5 fiery orange-red flight feathers tipped with bright golden-yellow per wing.
-  - **Faceted Sickle Ribbon Tail:** 12 indigo-navy tail-base tuft feathers supporting 6 wide, flat-bladed arched sickle tail ribbons transitioning from indigo base -> crimson arch -> glowing orange-gold tips.
-  - **Expressive Head:**
-    - 8-point serrated crimson crown comb.
-    - Large white sclera eyes with centered dark pupils, framed by a pinkish-red eye ring.
-    - Iconic curved white crescent cheek/ear lobe hugging below and behind each eye.
-    - Hooked golden-yellow upper and lower beak (separately rigged for crowing/pecking).
-    - Plump twin crimson-rose wattles beneath the chin.
-  - **Chunky Legs & Double Spurs:** Indigo-navy feathered drumsticks leading into scaly tan-gold shins with **two rear spurs per leg** and 4-toed feet (3 front toes + 1 rear hallux).
+![Shiba Inu Sitting Reference Pose](preview_shiba_sit_front.png)
 
----
+## 1.1 Exported Shiba Inu Files in `C:\3dassets\argon`
 
-## 3. Material & Shader Slots (14 Materials)
+| File | Format | Rigged | Animated | Materials | Best Used For |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| `cozy_shiba_inu.blend` | **Blender 5.2 Native** | Yes (34 Bones) | Yes (15 Actions + NLA) | Yes (11 Shaders) | Master source file, 1-click viewport playback UI, editing & re-exporting |
+| `cozy_shiba_inu.glb` | **glTF 2.0 Binary** | Yes | Yes (All 15 Clips) | Yes | **Godot 4, Three.js, Babylon.js, Unreal Engine 5, Unity (glTFast)** |
+| `cozy_shiba_inu.gltf` + `.bin` | **glTF 2.0 Separate** | Yes | Yes (All 15 Clips) | Yes | Inspectable JSON glTF pipelines & custom engine importers |
+| `cozy_shiba_inu.fbx` | **Autodesk FBX** | Yes | Yes (Baked Actions + NLA) | Yes | **Unity, Unreal Engine 5, Maya, 3ds Max, Houdini** |
+| `cozy_shiba_inu.usdc` | **Universal Scene Description (USD)** | Yes | Yes | Yes | **NVIDIA Omniverse, Unreal Engine 5 Stage, Apple Reality Composer** |
+| `cozy_shiba_inu.abc` | **Alembic Cache** | Vertex Cache | Yes (`Frames 1–72`) | Material Slots | VFX vertex-cache playback, Cinema 4D, Houdini |
+| `cozy_shiba_inu.obj` + `.mtl` | **Wavefront OBJ + MTL** | Static | Static | Yes | Static prop placement, Substance Painter, ZBrush, Marmoset |
+| `cozy_shiba_inu.ply` | **Stanford PLY** | Static | Static | Normals + UVs | Mesh inspection & procedural pipelines |
+| `cozy_shiba_inu.stl` | **Stereolithography STL** | Static | Static | Geometry Only | 3D printing & collision hull generation |
 
-All materials use **Principled BSDF** shaders with procedural **Noise -> ColorRamp -> Bump** brush-stroke variation for a rich, hand-painted stylized finish (with scene-linear sRGB color conversion):
+## 1.2 Shiba Inu Geometry & Topology Specifications
+- **Object Name:** `Shiba_Mesh` (parented to `Shiba_Rig` inside the `Cozy_Shiba` collection)
+- **Vertex Count:** `1,094` vertices | **Polygon / Face Count:** `1,750` crisp flat-shaded triangles/quads
+- **Art Style & Anatomical Details:**
+  - **Crisp Faceted Low-Poly ("Origami/Papercraft") Topology:** Built with half-stepped diamond-triangulated rings (`smooth=False`) so every facet catches light cleanly like the reference illustration.
+  - **Authentic Shiba Inu *Urajiro* Color-Blocking:** Warm ginger-orange coat on the crown, ears, back, and outer legs paired with cream-white cheeks, muzzle sides, "pip" eyebrow spots, proud chest shield, belly, inner tail curl, and white-socked paws with dark toe grooves.
+  - **Expressive Face:** Glossy dark almond eyes with bright white corneal catchlight sparkles, rigged upper eyelids (`Eyelid.L/R`), rigged white eyebrow spots (`Brow.L/R`), pointed triangular ears with dark espresso-rose inner hollows (`Ear.L/R`), glossy black faceted nose with philtrum line, smiling mouth corners, and an articulated lower `Jaw` + pink `Tongue`.
 
-| Slot | Material Name | Visual Area | Color Palette (sRGB Hex) | Roughness |
+## 1.3 Shiba Inu Material Slots (11 Scene-Linear Shaders)
+
+| Slot | Material Name | Visual Area | sRGB Hex Range | Roughness |
 | :---: | :--- | :--- | :--- | :---: |
-| `0` | `Mat_Indigo_Body` | Breast, belly, drumsticks, wing shoulder bow, tail base tuft | `#18347B` → `#2E5CC5` | `0.58` |
-| `1` | `Mat_Red_Plumage` | Upper head, upper neck hackles, upper back & saddle base | `#BA2418` → `#DF3B22` | `0.54` |
-| `2` | `Mat_Orange_Plumage` | Mid-lower hackle cape, saddle tips, wing primary bases | `#DC4818` → `#F6741D` | `0.52` |
-| `3` | `Mat_Gold_Tips` | Lower hackle jagged fringe, wing primary tips, sickle tail tips | `#EE6D19` → `#FFA424` | `0.50` |
-| `4` | `Mat_Wing_Crimson` | Middle 2 rows of scalloped wing covert feathers | `#A61322` → `#DC2834` | `0.52` |
-| `5` | `Mat_Tail_Crimson` | Arching sickle tail ribbon blades | `#9A141E` → `#D42A2A` | `0.52` |
-| `6` | `Mat_Comb_Red` | 8-point serrated crown comb | `#C8222B` → `#EB3A3E` | `0.42` |
-| `7` | `Mat_Wattle_Rose` | Twin hanging chin wattles | `#AE223B` → `#D83B52` | `0.44` |
-| `8` | `Mat_Eye_Ring` | Fleshy pinkish-red ring around the eye | `#DA485A` → `#F06474` | `0.48` |
-| `9` | `Mat_Cheek_White` | Curved white crescent cheek/ear lobe | `#D5DAE8` → `#F8FAFF` | `0.45` |
-| `10` | `Mat_Eye_Sclera` | Large round white eyeball | `#E2E6F0` → `#FFFFFF` | `0.15` |
-| `11` | `Mat_Eye_Pupil` | Glossy dark pupil | `#0D0F18` → `#1B1F2E` | `0.08` |
-| `12` | `Mat_Beak_Gold` | Hooked upper and lower beak | `#D59222` → `#F7BA38` | `0.38` |
-| `13` | `Mat_Leg_Tan` | Scaly shins, double rear spurs, and 4 toes | `#B48448` → `#D8A866` | `0.58` |
+| `0` | `Mat_Shiba_Ginger` | Main ginger-orange coat (crown, back, flanks, outer legs, tail) | `#D1631F` → `#F0822E` | `0.50` |
+| `1` | `Mat_Shiba_AmberShadow` | Shaded amber-rust facets (back of skull, lower flanks, ear backs) | `#A64517` → `#C7571F` | `0.54` |
+| `2` | `Mat_Shiba_GoldenLight` | Sunlit golden-apricot facets (forehead, top back, tail crest) | `#EB8733` → `#FCA847` | `0.48` |
+| `3` | `Mat_Shiba_CreamWhite` | Urajiro markings (cheeks, muzzle, eyebrows, chest shield, white paws, tail tip) | `#E8DBCA` → `#FCF5E8` | `0.46` |
+| `4` | `Mat_Shiba_CreamShadow` | Shaded cream facets (under-chin, lower chest, belly, inner thighs) | `#BFAB96` → `#DBC9B5` | `0.52` |
+| `5` | `Mat_Shiba_EarInner` | Dark espresso-rose inner ear cavity triangles | `#421F21` → `#612E2E` | `0.58` |
+| `6` | `Mat_Shiba_NoseBlack` | Glossy charcoal-black nose, philtrum, eyelids, and smiling mouth line | `#0D0D12` → `#1C1F26` | `0.22` |
+| `7` | `Mat_Shiba_EyeDark` | Glossy dark ebony almond eyes | `#08080D` → `#12121A` | `0.10` |
+| `8` | `Mat_Shiba_EyeSpec` | Pure bright white corneal catchlight sparkles | `#F5FAFF` → `#FFFFFF` | `0.05` |
+| `9` | `Mat_Shiba_TonguePink` | Rosy coral-pink tongue inside the lower jaw | `#D15261` → `#F07580` | `0.35` |
+| `10` | `Mat_Shiba_PawPad` | Dark slate-brown paw pads and toe claw dividers | `#2E2421` → `#40332E` | `0.65` |
 
----
-
-## 4. Rig / Armature Hierarchy (`Rooster_Rig` — 28 Bones)
-
-The character is bound via smooth procedural weight groups to `Rooster_Rig` (`Rooster_Rig_Data`):
+## 1.4 Shiba Inu Rig Hierarchy (`Shiba_Rig` — 34 Bones)
 
 ```text
 Root
- ├── Hips
- │    ├── Spine
- │    │    └── Chest
- │    │         ├── Neck_Base
- │    │         │    └── Neck_Top
- │    │         │         └── Head
- │    │         │              ├── Beak_Upper
- │    │         │              ├── Beak_Lower
- │    │         │              ├── Comb
- │    │         │              └── Wattle
- │    │         ├── Wing_Shoulder.L  ──> Wing_Mid.L  ──> Wing_Tip.L
- │    │         └── Wing_Shoulder.R  ──> Wing_Mid.R  ──> Wing_Tip.R
- │    ├── Tail_Base
- │    │    └── Tail_Mid
- │    │         ├── Tail_Tip
- │    │         ├── Tail_Fan.L
- │    │         └── Tail_Fan.R
- │    ├── Thigh.L  ──> Shin.L  ──> Foot.L  ──> Toes.L
- │    └── Thigh.R  ──> Shin.R  ──> Foot.R  ──> Toes.R
+ └── Hips
+      ├── Spine
+      │    └── Chest
+      │         ├── Neck
+      │         │    └── Head
+      │         │         ├── Snout
+      │         │         ├── Jaw ──> Tongue
+      │         │         ├── Ear.L / Ear.R
+      │         │         ├── Brow.L / Brow.R
+      │         │         └── Eyelid.L / Eyelid.R
+      │         ├── Leg_Front_Upper.L ──> Leg_Front_Lower.L ──> Paw_Front.L
+      │         └── Leg_Front_Upper.R ──> Leg_Front_Lower.R ──> Paw_Front.R
+      ├── Tail_Base ──> Tail_Mid ──> Tail_Tip
+      ├── Leg_Back_Upper.L ──> Leg_Back_Lower.L ──> Paw_Back.L
+      └── Leg_Back_Upper.R ──> Leg_Back_Lower.R ──> Paw_Back.R
 ```
 
----
+## 1.5 Shiba Inu Animations (15 Interactive Clips @ 24 FPS)
 
-## 5. Included Animations (7 Game-Ready Actions @ 24 FPS)
-
-All 7 animations are stored both as individual **Actions** (`bpy.data.actions`) and as non-overlapping **NLA Tracks** on `Rooster_Rig`:
-
-| # | Action Name | Frame Range | Duration (@ 24 FPS) | Loopable | Cozy Power-Wash Gameplay Behavior |
+| # | Action Name | Frames | Duration | Loop | Cozy Gameplay & Player Interaction Behavior |
 | :-: | :--- | :---: | :---: | :---: | :--- |
-| **1** | `Idle_LookAround` | `1 – 80` | **3.33 sec** | Yes | Breathing chest puff, curious quick chicken head tilts, beak nibble, and gentle tail sway while standing around the yard. |
-| **2** | `Peck_Scratch` | `1 – 70` | **2.92 sec** | Yes | Dips forward for rapid ground pecks (`Beak_Upper`/`Beak_Lower` open/close), then scratches the dirt twice with its left foot (`Thigh.L`/`Shin.L`/`Foot.L`). |
-| **3** | `Walk_Strut` | `1 – 32` | **1.33 sec** | Yes | Classic proud rooster strut with rhythmic front-to-back head-bobbing, high-stepping legs, toe curl, and side-to-side tail swagger. |
-| **4** | `Startled_Hop` | `1 – 36` | **1.50 sec** | One-Shot | **Triggered when hit by the power-washer spray!** Jumps straight up in surprise, flares both wings wide open, splays toes in mid-air, and lands with a squash-and-stretch bounce. |
-| **5** | `Shake_Off_Water` | `1 – 50` | **2.08 sec** | One-Shot | **Played after getting soaked!** Crouches slightly and rapidly vibrates/shakes head, wattles, comb, wings, and tail out of phase to fling water droplets off its feathers. |
-| **6** | `Run_Flee` | `1 – 16` | **0.67 sec** | Yes | Fast comedic panic sprint away from the player's water stream — neck stretched forward, wings held up and fluttering, rapid leg cycle. |
-| **7** | `Happy_Crow` | `1 – 75` | **3.13 sec** | One-Shot | **Played when the yard/coop is 100% sparkling clean!** Deep chest inhale, arches back proudly, opens beak wide (`Rooster-doodle-doo!`), and flaps wings in celebration. |
+| **1** | `Idle_Sit_Smile` | `1 – 72` | **3.00 sec** | Yes | **Reference Pose!** Sitting politely with proud chest, warm smile, soft tail wag, and curious Shiba head-tilts. |
+| **2** | `Idle_Stand_Pant` | `1 – 60` | **2.50 sec** | Yes | Standing on all fours, happy panting (`Jaw` + `Tongue`), perky ears, and curled tail wagging. |
+| **3** | `Pet_Head_Bliss` | `1 – 60` | **2.50 sec** | Yes | **When petted on the head!** Leans head up into the player's hand, folds "airplane ears" horizontally back, squints eyes shut (`Eyelid.L/R`), and wags tail double-speed. |
+| **4** | `Belly_Rub_RollOver` | `1 – 72` | **3.00 sec** | One-Shot | **Extended petting reward!** Rolls onto its back with front paws tucked on its chest, tongue lolling out, and right hind leg kicking rhythmically in bliss. |
+| **5** | `Speak_Double_Bark` | `1 – 40` | **1.67 sec** | One-Shot | **Interactive Bark ("Arf! Arf!")!** Anticipation crouch followed by two snappy barks with chest puff, head toss, jaw snap, and ear perk. |
+| **6** | `Give_Paw_Trick` | `1 – 48` | **2.00 sec** | One-Shot | Sits politely and lifts its right front white-socked paw high to shake hands with the player. |
+| **7** | `Play_Bow_Excited` | `1 – 48` | **2.00 sec** | Yes | **Fetch Ready Pose!** Drops front elbows flat to the ground while keeping rear hips high in the air, bouncing and wagging its tail waiting for the throw. |
+| **8** | `Pickup_Drop_Ball` | `1 – 36` | **1.50 sec** | One-Shot | Dips chest and neck between front paws, opens `Jaw` wide to grab or drop a ball, then lifts head up proudly. |
+| **9** | `Walk_Jaunty_Trot` | `1 – 24` | **1.00 sec** | Yes | Bouncy diagonal 4-legged Shiba trot (`Front.L + Back.R` alternating with `Front.R + Back.L`). |
+| **10** | `Run_Fetch_Gallop` | `1 – 18` | **0.75 sec** | Yes | Fast, energetic 4-legged rotary gallop with full spine flexion/extension to chase the ball. |
+| **11** | `Play_Chomp_Spray` | `1 – 48` | **2.00 sec** | One-Shot | **Power-Wash Interaction!** Hops up on hind legs and playfully snaps/chomps its jaw left and right at the water mist. |
+| **12** | `Shake_Off_Water` | `1 – 48` | **2.00 sec** | One-Shot | **After getting wet!** Wide-stance crouch with a phase-delayed high-frequency axial shake rippling from head -> ears -> chest -> hips -> tail. |
+| **13** | `Scratch_Ear_Itch` | `1 – 54` | **2.25 sec** | One-Shot | Sits, leans head and neck to the right with right eye squinted shut, and rapidly thumps its right hind paw behind its ear. |
+| **14** | `Sniff_Find_Dirt` | `1 – 60` | **2.50 sec** | One-Shot | **Cozy Gameplay Helper!** Lowers nose to the floor sweeping left-and-right sniffing the ground, then perks up and points with its front left paw raised at hidden dirt! |
+| **15** | `Sleep_Curl_Nap` | `1 – 84` | **3.50 sec** | Yes | Lies flat on its belly with paws tucked, head curled toward its tail, eyes closed, breathing slowly with an occasional cute ear twitch. |
 
 ---
 
-## 6. How to Preview Animations in Blender
+# Part 2: Stylized Cozy Rooster (`cozy_powerwash_rooster`)
 
-When you open `cozy_powerwash_rooster.blend` in Blender:
-1. **Top 3D Viewport Header Bar:** Look at the top bar of the 3D Viewport (or the Sidebar `N` -> `Rooster` tab) to find the **7 one-click animation buttons** (`Idle_LookAround`, `Peck_Scratch`, `Walk_Strut`, `Startled_Hop`, `Shake_Off_Water`, `Run_Flee`, `Happy_Crow`).
-2. Clicking any button automatically:
-   - Unmutes/activates that animation Action on `Rooster_Rig`,
-   - Sets the scene's `frame_start` and `frame_end` to match that exact clip's length, and
-   - Starts real-time playback in the 3D Viewport (`Spacebar` to pause/resume).
+![Cozy Rooster Reference Pose](preview_front_right.png)
+
+## 2.1 Exported Rooster Files in `C:\3dassets\argon`
+- `cozy_powerwash_rooster.blend`, `.glb`, `.gltf` + `.bin`, `.fbx`, `.usdc`, `.abc`, `.obj` + `.mtl`, `.ply`, `.stl`
+- **Topology:** `16,774` vertices | `18,828` faces | **Rig:** `Rooster_Rig` (28 Bones) | **Materials:** 14 Hand-Painted Procedural Node Shaders
+- **7 Animations (@ 24 FPS):**
+  1. `Idle_LookAround` (`1–80`, `3.33s` Loop)
+  2. `Peck_Scratch` (`1–70`, `2.92s` Loop)
+  3. `Walk_Strut` (`1–32`, `1.33s` Loop)
+  4. `Startled_Hop` (`1–36`, `1.50s` One-Shot)
+  5. `Shake_Off_Water` (`1–50`, `2.08s` One-Shot)
+  6. `Run_Flee` (`1–16`, `0.67s` Loop)
+  7. `Happy_Crow` (`1–75`, `3.13s` One-Shot)
