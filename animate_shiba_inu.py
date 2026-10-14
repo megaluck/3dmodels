@@ -113,6 +113,7 @@ def key_all_bones(frame):
     for pb in pbones:
         pb.keyframe_insert(data_path="location", frame=frame)
         pb.keyframe_insert(data_path="rotation_euler", frame=frame)
+        pb.keyframe_insert(data_path="scale", frame=frame)
 
 def set_linear_or_bezier(action, cyclic=False):
     for layer in action.layers:
@@ -202,7 +203,7 @@ def build_idle_stand_pant(act):
         set_bone_world("Chest", (-2.0 * breath, 0.0, 0.0))
         set_bone_world("Head",  (-4.0 - 2.0 * breath, 4.0 * wag, 3.0 * wag))
         set_bone_world("Jaw",   (14.0 + 7.0 * pant, 0.0, 0.0))
-        set_bone("Tongue", loc=(0.0, -0.012 - 0.006 * max(0.0, pant), -0.004), rot_deg=(8.0, 0.0, 0.0))
+        set_bone("Tongue", loc=(0.0, 0.012 + 0.005 * max(0.0, pant), -0.008), rot_deg=(-4.0, 0.0, 0.0))
         set_bone_world("Tail_Base", (-6.0, 18.0 * wag, 14.0 * wag))
         set_bone_world("Tail_Mid",  (0.0, 14.0 * wag, 10.0 * wag))
         for side in ("L", "R"):
@@ -214,8 +215,11 @@ anim_specs.append(("Idle_Stand_Pant", 60, build_idle_stand_pant, True))
 
 # ==============================================================================
 # 3. Pet_Head_Bliss (Frames 1..60, 2.5s Interaction Loop/Clip)
-#    Leans head up into the player's hand, folds "airplane ears" back, squints
-#    eyes shut in bliss (`Eyelid.L/R`), and wags tail double-speed!
+#    Proudly lifts head & neck UP to look at the player, breaks into a wide,
+#    beaming Shiba smile (widened snout + open smiling jaw + happy pink tongue
+#    resting above the lower jaw), folds "airplane ears" back, squints eyes in
+#    warm bliss (`Eyelid.L/R`), and wags tail double-speed while front paws stay
+#    100% grounded at `Z = 0.012 m`!
 # ==============================================================================
 def build_pet_head_bliss(act):
     for f in range(1, 61, 4):
@@ -225,23 +229,40 @@ def build_pet_head_bliss(act):
         envelope = math.sin(min(1.0, t * 4.0) * (math.pi / 2.0)) if t < 0.8 else math.cos((t - 0.8) / 0.2 * (math.pi / 2.0))
         wag = math.sin(t * 8.0 * math.pi) # Fast happy tail wag!
         nuzzle = math.sin(t * 4.0 * math.pi)
+        pant = 0.5 + 0.5 * math.sin(t * 8.0 * math.pi) # Gentle happy smile-pant breathing
 
-        set_bone_world("Neck",  (22.0 + 6.0 * envelope, 0.0, 0.0))
-        set_bone_world("Head",  (2.0 - 16.0 * envelope, 8.0 * nuzzle * envelope, 5.0 * nuzzle * envelope))
+        # Lift chest and neck proudly, and tilt Head UP (-24 deg world X) to look right up at the player!
+        set_bone_world("Spine", (6.0 + 2.0 * envelope, 0.0, 0.0))
+        set_bone_world("Chest", (6.0 + 4.0 * envelope, 0.0, 0.0))
+        set_bone_world("Neck",  (22.0 - 14.0 * envelope, 0.0, 0.0), world_loc=(0.0, 0.0, 0.010 * envelope))
+        set_bone_world("Head",  (2.0 - 26.0 * envelope, 7.0 * nuzzle * envelope, 5.0 * nuzzle * envelope), world_loc=(0.0, 0.0, 0.008 * envelope))
+
+        # Wide beaming Shiba smile: Snout lifts & widens (+14% X scale) so mouth corners & cheeks curve up!
+        set_bone_world("Snout", (-4.0 * envelope, 0.0, 0.0), world_loc=(0.0, 0.0, 0.004 * envelope))
+        set_bone("Snout", scale=(1.0 + 0.14 * envelope, 1.0, 1.0 + 0.06 * envelope))
+
+        # Open Jaw into a warm doggy smile + happy pink tongue resting ABOVE the lower jaw!
+        set_bone_world("Jaw", ((18.0 + 4.0 * pant) * envelope, 0.0, 0.0))
+        set_bone("Tongue",
+                 loc=(0.0, (0.017 + 0.003 * pant) * envelope, -0.012 * envelope),
+                 rot_deg=(-8.0 * envelope, 0.0, 0.0),
+                 scale=(1.0 + 0.15 * envelope, 1.0 + 0.15 * envelope, 1.0 + 0.20 * envelope))
+
         # Airplane ears folded happily back & out!
-        set_bone_world("Ear.L", (-24.0 * envelope, 34.0 * envelope, 12.0 * envelope))
-        set_bone_world("Ear.R", (-24.0 * envelope, -34.0 * envelope, -12.0 * envelope))
-        # Eyes squinted shut in pure bliss!
-        set_bone("Eyelid.L", loc=(0.0, -0.003 * envelope, -0.014 * envelope), rot_deg=(22.0 * envelope, 0.0, 0.0))
-        set_bone("Eyelid.R", loc=(0.0, -0.003 * envelope, -0.014 * envelope), rot_deg=(22.0 * envelope, 0.0, 0.0))
-        set_bone("Brow.L",   loc=(0.0, 0.0, -0.005 * envelope))
-        set_bone("Brow.R",   loc=(0.0, 0.0, -0.005 * envelope))
-        # Slight happy smile pant
-        set_bone_world("Jaw", (10.0 * envelope, 0.0, 0.0))
-        set_bone("Tongue",    loc=(0.0, -0.010 * envelope, 0.0))
-        # Rapid tail wag
+        set_bone_world("Ear.L", (-26.0 * envelope, 34.0 * envelope, 14.0 * envelope))
+        set_bone_world("Ear.R", (-26.0 * envelope, -34.0 * envelope, -14.0 * envelope))
+
+        # Warm squinting smiling eyes (catchlights still visible so he looks up at us!) + raised happy pip eyebrows
+        set_bone("Eyelid.L", loc=(0.0, -0.003 * envelope, -0.010 * envelope), rot_deg=(16.0 * envelope, 0.0, 0.0))
+        set_bone("Eyelid.R", loc=(0.0, -0.003 * envelope, -0.010 * envelope), rot_deg=(16.0 * envelope, 0.0, 0.0))
+        set_bone("Brow.L",   loc=(0.0, -0.002 * envelope, 0.006 * envelope))
+        set_bone("Brow.R",   loc=(0.0, -0.002 * envelope, 0.006 * envelope))
+
+        # Rapid happy tail wag
         set_bone_world("Tail_Base", (-10.0, 24.0 * wag, 18.0 * wag))
         set_bone_world("Tail_Mid",  (0.0, 18.0 * wag, 12.0 * wag))
+
+        # Keep both front paws 100% grounded at Z = 0.012 m after chest lift!
         for side in ("L", "R"):
             plant_leg_world("Front", side, target_paw_tail_z=0.012, outward_deg=0.0)
         key_all_bones(f)
@@ -275,7 +296,7 @@ def build_belly_rub_rollover(act):
         set_bone_world("Neck",  (24.0 * roll, 0.0, 0.0))
         set_bone_world("Head",  (22.0 * roll, 10.0 * roll, 6.0 * wag))
         set_bone_world("Jaw",   (18.0 * roll, 0.0, 0.0))
-        set_bone("Tongue", loc=(0.010 * roll, -0.015 * roll, 0.0), rot_deg=(12.0 * roll, 0.0, 15.0 * roll))
+        set_bone("Tongue", loc=(0.010 * roll, 0.015 * roll, -0.010 * roll), rot_deg=(-8.0 * roll, 0.0, 15.0 * roll))
         set_bone_world("Ear.L", (-18.0 * roll, 22.0 * roll, 0.0))
         set_bone_world("Ear.R", (-18.0 * roll, -22.0 * roll, 0.0))
         set_bone("Eyelid.L", loc=(0.0, -0.003 * roll, -0.014 * roll))
@@ -325,7 +346,7 @@ def build_speak_double_bark(act):
         set_bone_world("Neck",  (crx * 0.5, 0.0, 0.0))
         set_bone_world("Head",  (hrx, 0.0, 0.0))
         set_bone_world("Jaw",   (jrx, 0.0, 0.0))
-        set_bone("Tongue", loc=(0.0, -0.012 if jrx > 15 else 0.0, 0.0))
+        set_bone("Tongue", loc=(0.0, 0.012 if jrx > 15 else 0.0, -0.008 if jrx > 15 else 0.0))
         set_bone_world("Ear.L", (erx, 0.0, 0.0))
         set_bone_world("Ear.R", (erx, 0.0, 0.0))
         set_bone("Brow.L", loc=(0.0, 0.0, 0.006 if jrx > 15 else 0.0))
@@ -391,7 +412,7 @@ def build_play_bow_excited(act):
         set_bone_world("Neck",  (-28.0 * bow, 0.0, 0.0))
         set_bone_world("Head",  (-24.0 * bow - 6.0 * bounce, 6.0 * wag, 4.0 * wag))
         set_bone_world("Jaw",   (18.0 * bow + 8.0 * bounce, 0.0, 0.0))
-        set_bone("Tongue", loc=(0.0, -0.015 * bow, 0.0))
+        set_bone("Tongue", loc=(0.0, 0.015 * bow, -0.008 * bow))
 
         for side, sx in [("L", 1.0), ("R", -1.0)]:
             # Front legs stretched forward with elbows & forearms resting flat on the floor (Z = 0.02)!
@@ -457,7 +478,7 @@ def build_walk_jaunty_trot(act):
         set_bone_world("Neck",  (-3.0 * bob, 0.0, 0.0))
         set_bone_world("Head",  (-4.0 * bob, 3.0 * s1, 3.0 * s1))
         set_bone_world("Jaw",   (10.0 + 3.0 * bob, 0.0, 0.0))
-        set_bone("Tongue", loc=(0.0, -0.010, 0.0))
+        set_bone("Tongue", loc=(0.0, 0.010, -0.006))
         set_bone_world("Ear.L", (-6.0 * bob, 0.0, 0.0))
         set_bone_world("Ear.R", (-6.0 * bob, 0.0, 0.0))
         set_bone_world("Tail_Base", (-8.0 - 6.0 * bob, 16.0 * s1, 12.0 * s1))
@@ -502,7 +523,7 @@ def build_run_fetch_gallop(act):
         set_bone_world("Neck",  (6.0 * s, 0.0, 0.0))
         set_bone_world("Head",  (-8.0 * s, 0.0, 0.0))
         set_bone_world("Jaw",   (16.0 + 6.0 * s, 0.0, 0.0))
-        set_bone("Tongue", loc=(0.0, -0.016, 0.0))
+        set_bone("Tongue", loc=(0.0, 0.016, -0.008))
         set_bone_world("Ear.L", (-20.0 - 8.0 * s, 0.0, 0.0))
         set_bone_world("Ear.R", (-20.0 - 8.0 * s, 0.0, 0.0))
         set_bone_world("Tail_Base", (14.0 - 12.0 * c, 0.0, 0.0))
@@ -547,7 +568,7 @@ def build_play_chomp_spray(act):
         set_bone_world("Neck",  (10.0 * hop, 0.0, 0.0))
         set_bone_world("Head",  (8.0 * hop, 14.0 * look_lr, 14.0 * look_lr))
         set_bone_world("Jaw",   (32.0 * chomp, 0.0, 0.0))
-        set_bone("Tongue", loc=(0.0, -0.015 * chomp, 0.0))
+        set_bone("Tongue", loc=(0.0, 0.015 * chomp, -0.008 * chomp))
         set_bone_world("Ear.L", (-14.0 * hop, 12.0 * chomp, 0.0))
         set_bone_world("Ear.R", (-14.0 * hop, -12.0 * chomp, 0.0))
 
