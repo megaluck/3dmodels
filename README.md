@@ -8,7 +8,9 @@ This repository contains stylized, game-ready **3D Character Assets** modeled, r
 
 # Part 1: Expressive Low-Poly Shiba Inu (`cozy_shiba_inu`)
 
-![Shiba Inu Sitting Reference Pose](preview_shiba_sit_front.png)
+> **Full Shiba Inu Documentation & State Machine Guide:** See **[`SHIBA_INU_README.md`](SHIBA_INU_README.md)** for the complete animation transition graph, posture gating rules, gameplay sequence recipes, and forbidden transition table.
+
+![Shiba Inu Sitting Reference Pose](shiba_preview_sit_front.png)
 
 ## 1.1 Exported Shiba Inu Files in `C:\3dassets\argon`
 
@@ -88,6 +90,21 @@ Root
 | **13** | `Scratch_Ear_Itch` | `1 – 54` | **2.25 sec** | One-Shot | Sits, leans head and neck to the right with right eye squinted shut, and rapidly thumps its right hind paw behind its ear. |
 | **14** | `Sniff_Find_Dirt` | `1 – 60` | **2.50 sec** | One-Shot | **Cozy Gameplay Helper!** Lowers nose to the floor sweeping left-and-right sniffing the ground, then perks up and points with its front left paw raised at hidden dirt! |
 | **15** | `Sleep_Curl_Nap` | `1 – 84` | **3.50 sec** | Yes | Lies flat on its belly with paws tucked, head curled toward its tail, eyes closed, breathing slowly with an occasional cute ear twitch. |
+
+## 1.6 Shiba Inu Animation State Machine & Posture Gating Rules
+
+Every animation belongs to a specific **Base Posture Group**, and transitions must be routed through two core **Hub States** so the dog never teleports between incompatible poses (e.g., never transition directly from `Run_Fetch_Gallop -> Scratch_Ear_Itch`):
+
+1. **`Idle_Stand_Pant` (Standing Hub — `speed == 0`, 4 paws on ground):**
+   - **Locomotion Blend Space (`0.18s–0.22s`):** `Idle_Stand_Pant (speed=0.0)` $\leftrightarrow$ `Walk_Jaunty_Trot (speed=0.5)` $\leftrightarrow$ `Run_Fetch_Gallop (speed=1.0)`.
+   - **Standing Actions (`0.20s–0.25s`, only when `speed == 0`):** `Play_Bow_Excited`, `Speak_Double_Bark`, `Pickup_Drop_Ball`, `Sniff_Find_Dirt`, `Play_Chomp_Spray` $\rightarrow$ `Shake_Off_Water`.
+2. **`Idle_Sit_Smile` (Sitting Hub — `speed == 0`, rear haunches on ground `dz = -0.175 m`):**
+   - Bridges to/from `Idle_Stand_Pant` via a **`0.35s` Sit/Stand transition** when `speed == 0`.
+   - **Sitting Actions (`0.25s`, only from `Idle_Sit_Smile`):** `Pet_Head_Bliss` ($\rightarrow$ `Belly_Rub_RollOver` after `3s` of petting), `Give_Paw_Trick`, `Scratch_Ear_Itch`, and `Sleep_Curl_Nap` (`0.50s` settle).
+3. **Example Multi-Step Transition (`Running -> Scratch Ear`):**
+   - **Forbidden:** `Run_Fetch_Gallop -> Scratch_Ear_Itch` (causes mid-air pelvis drop & hind-leg teleportation).
+   - **Correct Chain:** `Run_Fetch_Gallop` $\xrightarrow{0.20\text{s}}$ `Walk_Jaunty_Trot` $\xrightarrow{0.20\text{s}}$ `Idle_Stand_Pant` $\xrightarrow{0.35\text{s}}$ `Idle_Sit_Smile` $\xrightarrow{0.25\text{s}}$ `Scratch_Ear_Itch`.
+   - Full state machine diagram and gameplay sequence recipes are documented in **[`SHIBA_INU_README.md`](SHIBA_INU_README.md)**.
 
 ---
 
