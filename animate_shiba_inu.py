@@ -429,26 +429,29 @@ def build_play_bow_excited(act):
 anim_specs.append(("Play_Bow_Excited", 48, build_play_bow_excited, True))
 
 # ==============================================================================
-# 8. Pickup_Drop_Ball (Frames 1..36, 1.5s Fetch Grab/Drop)
-#    Bends front legs and pitches chest/neck forward to pick up ball at ground level!
+# 8. Pickup_Drop_Ball (Frames 1..36, 1.5s Fetch Grab/Drop for Toy Bone or Ball)
+#    Bends front legs and pitches chest/neck forward so `Mouth_Socket` touches
+#    right down to ground-prop level (`Z = 0.055 m` at Frame 15, `t = 0.625s`),
+#    clamps `Jaw` onto the Toy Bone (`16 deg`), and lifts head proudly at Frame 25
+#    while ALL 4 PAWS stay 100% grounded at `Z = 0.012 m`!
 # ==============================================================================
 def build_pickup_drop_ball(act):
     kfs = [
         # (frame, reach_env, jaw_rx, lift_env)
         (1,  0.0,  0.0, 0.0),
-        (10, 0.9, 30.0, 0.0), # Reach down & open jaw wide over ball
-        (15, 1.0, 14.0, 0.0), # Clamp jaw onto ball near ground!
-        (25, 0.0, 14.0, 1.0), # Proudly lift head up holding ball
+        (10, 0.9, 30.0, 0.0), # Reach down & open jaw wide over Toy Bone / Ball
+        (15, 1.0, 16.0, 0.0), # EVENT FRAME (0.625s): Clamp jaw onto Toy Bone at ground level (Z = 0.055m)!
+        (25, 0.0, 16.0, 1.0), # Proudly lift head up holding Toy Bone in Mouth_Socket
         (36, 0.0,  0.0, 0.0),
     ]
     for f, r_env, jrx, l_env in kfs:
         scene.frame_set(f)
         reset_pose()
-        set_bone_world("Hips",  (10.0 * r_env - 4.0 * l_env, 0.0, 0.0), world_loc=(0.0, 0.0, 0.01 * r_env + 0.010 * l_env))
-        set_bone_world("Spine", (12.0 * r_env - 4.0 * l_env, 0.0, 0.0))
-        set_bone_world("Chest", (10.0 * r_env - 4.0 * l_env, 0.0, 0.0))
-        set_bone_world("Neck",  (24.0 * r_env - 10.0 * l_env, 0.0, 0.0))
-        set_bone_world("Head",  (2.0 * r_env - 12.0 * l_env, 0.0, 0.0))
+        set_bone_world("Hips",  (13.0 * r_env, 0.0, 0.0), world_loc=(0.0, 0.0, -0.055 * r_env - 0.012 * l_env))
+        set_bone_world("Spine", (15.0 * r_env + 2.0 * l_env, 0.0, 0.0))
+        set_bone_world("Chest", (16.0 * r_env + 2.0 * l_env, 0.0, 0.0))
+        set_bone_world("Neck",  (32.0 * r_env - 12.0 * l_env, 0.0, 0.0))
+        set_bone_world("Head",  (-16.0 * r_env - 14.0 * l_env, 0.0, 0.0))
         set_bone_world("Jaw",   (jrx, 0.0, 0.0))
         for side in ("L", "R"):
             plant_leg_world("Front", side, target_paw_tail_z=0.012)

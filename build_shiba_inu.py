@@ -145,10 +145,11 @@ make_bone("Chest",      (0.0, -0.02, 0.46), (0.0, -0.20, 0.49), "Spine", connect
 make_bone("Neck",       (0.0, -0.18, 0.49), (0.0, -0.25, 0.62), "Chest")
 make_bone("Head",       (0.0, -0.25, 0.62), (0.0, -0.32, 0.80), "Neck", connect=True)
 
-# Expressive Facial Bones
-make_bone("Snout",      (0.0, -0.33, 0.68), (0.0, -0.49, 0.67), "Head")
-make_bone("Jaw",        (0.0, -0.31, 0.63), (0.0, -0.45, 0.61), "Head")
-make_bone("Tongue",     (0.0, -0.34, 0.63), (0.0, -0.46, 0.62), "Jaw")
+# Expressive Facial Bones + VR Fetch Mouth Attachment Socket
+make_bone("Snout",        (0.0, -0.33,  0.68),  (0.0, -0.49,  0.67),  "Head")
+make_bone("Jaw",          (0.0, -0.31,  0.63),  (0.0, -0.45,  0.61),  "Head")
+make_bone("Tongue",       (0.0, -0.34,  0.63),  (0.0, -0.46,  0.62),  "Jaw")
+make_bone("Mouth_Socket", (0.0, -0.425, 0.648), (0.0, -0.425, 0.708), "Head")
 
 for side, sx in [("L", 1.0), ("R", -1.0)]:
     make_bone(f"Ear.{side}",     (sx * 0.095, -0.22, 0.78), (sx * 0.135, -0.21, 0.94), "Head")

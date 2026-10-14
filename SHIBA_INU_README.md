@@ -6,15 +6,14 @@
 `cozy_shiba_inu` is an expressive, faceted low-poly ("origami/papercraft") **Shiba Inu companion** created in **Blender 5.2** (`24 FPS`, Scene-Linear sRGB color pipeline) for interactive gameplay in a **Cozy Power-Wash Game** (playing fetch, petting, trick training, reacting to water spray, and helping the player sniff out hidden dirt).
 
 - **Mesh Object:** `Shiba_Mesh` (`1,094` vertices, `1,750` flat-shaded triangles/quads)
-- **Armature Object:** `Shiba_Rig` (`34` bones — full quadruped locomotion skeleton + articulated facial rig: `Jaw`, `Tongue`, `Ear.L/R`, `Brow.L/R`, `Eyelid.L/R`, and 3-segment curled `Tail`)
+- **Armature Object:** `Shiba_Rig` (`35` bones — full quadruped locomotion skeleton + articulated facial rig: `Jaw`, `Tongue`, `Ear.L/R`, `Brow.L/R`, `Eyelid.L/R`, **`Mouth_Socket`** for VR fetch prop attachment, and 3-segment curled `Tail`)
+- **Matching VR Fetch Prop (`cozy_shiba_toy_bone`):** Separate faceted low-poly Toy Bone mesh (`ToyBone_Mesh`, `18.4 cm` wide, with a golden-amber grip band centered at local `(0, 0, 0)` so it snaps crosswise into `Mouth_Socket` with zero offset!)
 - **Materials:** `11` procedural scene-linear PBR materials (`Mat_Shiba_Ginger`, `Mat_Shiba_AmberShadow`, `Mat_Shiba_GoldenLight`, `Mat_Shiba_CreamWhite`, `Mat_Shiba_CreamShadow`, `Mat_Shiba_EarInner`, `Mat_Shiba_NoseBlack`, `Mat_Shiba_EyeDark`, `Mat_Shiba_EyeSpec`, `Mat_Shiba_TonguePink`, `Mat_Shiba_PawPad`)
 - **Exported Formats in `C:\3dassets\argon`:**
   - `cozy_shiba_inu.blend` (Master Blender 5.2 file with 15 Actions, NLA tracks, and 1-click Viewport playback UI)
   - `cozy_shiba_inu.glb` & `cozy_shiba_inu.gltf` + `.bin` (glTF 2.0 for Godot 4, Three.js, Unity, Unreal Engine 5)
-  - `cozy_shiba_inu.fbx` (Autodesk FBX with baked skeletal actions & NLA strips)
-  - `cozy_shiba_inu.usdc` (Universal Scene Description)
-  - `cozy_shiba_inu.abc` (Alembic vertex cache)
-  - `cozy_shiba_inu.obj` + `.mtl`, `cozy_shiba_inu.ply`, `cozy_shiba_inu.stl` (Static mesh formats)
+  - `cozy_shiba_inu.fbx`, `.usdc`, `.abc`, `.obj` + `.mtl`, `.ply`, `.stl`
+  - `cozy_shiba_toy_bone.glb`, `.gltf`, `.fbx`, `.usdc`, `.obj`, `.ply`, `.stl` (Matching VR Fetch Toy Bone prop)
 
 ---
 
@@ -35,8 +34,8 @@ Every animation on `Shiba_Rig` belongs to a specific **Base Posture Group**.
 
 | Posture Group | Hub / Anchor State | Member Animations | Pelvis (`Hips`) State |
 | :--- | :--- | :--- | :--- |
-| **A. Sitting Group** | **`Idle_Sit_Smile` (Sitting Hub)** | `Idle_Sit_Smile`, `Pet_Head_Bliss`, `Give_Paw_Trick`, `Scratch_Ear_Itch` | Rear haunches on floor (`dz = -0.175 m`, `rx = -38°`), spine/chest upright |
-| **B. Standing & Action Group** | **`Idle_Stand_Pant` (Standing Hub)** | `Idle_Stand_Pant`, `Speak_Double_Bark`, `Play_Bow_Excited`, `Pickup_Drop_Ball`, `Sniff_Find_Dirt`, `Play_Chomp_Spray`, `Shake_Off_Water` | All 4 paws on ground (`dz ≈ 0.0 m`, neutral spine) |
+| **A. Sitting Group** | **`Idle_Sit_Smile` (Sitting Hub)** | `Idle_Sit_Smile`, `Pet_Head_Bliss`, `Give_Paw_Trick`, `Scratch_Ear_Itch` | Rear haunches on floor (`dz = -0.175 m`, `rx = -38°`), spine/chest upright, front paws locked at `Z = 0.012 m` |
+| **B. Standing & Action Group** | **`Idle_Stand_Pant` (Standing Hub)** | `Idle_Stand_Pant`, `Speak_Double_Bark`, `Play_Bow_Excited`, `Pickup_Drop_Ball`, `Sniff_Find_Dirt`, `Play_Chomp_Spray`, `Shake_Off_Water` | All 4 paws flat on ground (`Z = 0.012 m`, zero paw tilt) |
 | **C. Locomotion Group** | **Driven by `speed` from `Idle_Stand_Pant`** | `Walk_Jaunty_Trot` (`speed = 0.5`), `Run_Fetch_Gallop` (`speed = 1.0`) | Dynamic gait bounce (`dz = +0.02 m` to `+0.06 m`) |
 | **D. Ground / Lying Group** | **Entered from `Idle_Sit_Smile` or `Idle_Stand_Pant` at `speed = 0`** | `Belly_Rub_RollOver` (on back), `Sleep_Curl_Nap` (curled on belly) | Pelvis resting on floor (`dz = -0.27 m` or rolled `165°` on back) |
 
@@ -46,19 +45,19 @@ Every animation on `Shiba_Rig` belongs to a specific **Base Posture Group**.
 
 | # | Action Name | Posture Group | Frames | Duration | Type | Entry Prerequisite | Exit Target | Description & Key Pose Details |
 | :-: | :--- | :--- | :---: | :---: | :---: | :--- | :--- | :--- |
-| **1** | `Idle_Sit_Smile` | **Sitting Hub** | `1–72` | `3.00s` | Loop | `speed == 0` | Any **Sitting** clip, or blend (`0.35s`) to `Idle_Stand_Pant` / `Sleep_Curl_Nap` | **Default Reference Pose.** Sitting politely with proud white chest, warm smile, soft tail wag, and curious left/right head tilts. |
+| **1** | `Idle_Sit_Smile` | **Sitting Hub** | `1–72` | `3.00s` | Loop | `speed == 0` | Any **Sitting** clip, or blend (`0.35s`) to `Idle_Stand_Pant` / `Sleep_Curl_Nap` | **Default Reference Pose.** Sitting politely with proud white chest, warm smile, soft tail wag, curious left/right head tilts, and front paws grounded (`Z = 0.012 m`). |
 | **2** | `Idle_Stand_Pant` | **Standing Hub** | `1–60` | `2.50s` | Loop | `speed == 0` | Any **Standing** clip, `Walk_Jaunty_Trot`, or blend (`0.35s`) to `Idle_Sit_Smile` | Standing on all fours, rhythmic happy panting (`Jaw` + `Tongue`), perky ears, and curled tail wagging. |
-| **3** | `Pet_Head_Bliss` | Sitting | `1–60` | `2.50s` | Loop / Hold | Must be in `Idle_Sit_Smile` (`speed == 0`) | `Idle_Sit_Smile` (`0.25s`), or escalate to `Belly_Rub_RollOver` (`0.40s`) | Triggered when petted on the head. Leans head up into the player's hand, folds "airplane ears" flat back, squints eyes shut (`Eyelid.L/R`), and wags tail double-speed. |
+| **3** | `Pet_Head_Bliss` | Sitting | `1–60` | `2.50s` | Loop / Hold | Must be in `Idle_Sit_Smile` (`speed == 0`) | `Idle_Sit_Smile` (`0.25s`), or escalate to `Belly_Rub_RollOver` (`0.40s`) | Triggered when petted on the head. Proudly lifts head up (`-24°`) to look at the player, breaks into a wide beaming Shiba smile (`Snout` widens `+14%`, `Jaw` opens `20°` with happy pink `Tongue` visible above the lower jaw), folds "airplane ears" flat back, squints eyes in warm bliss, and wags tail double-speed. |
 | **4** | `Belly_Rub_RollOver` | Ground (Back) | `1–72` | `3.00s` | One-Shot | From `Pet_Head_Bliss` or `Idle_Stand_Pant` (`speed == 0`) | `Idle_Stand_Pant` or `Idle_Sit_Smile` (`0.35s`) | Rolls `165°` onto its back on the floor, tucks both front paws over its chest, lolls tongue out, and kicks its right hind leg rhythmically in bliss. |
 | **5** | `Speak_Double_Bark` | Standing | `1–40` | `1.67s` | One-Shot | `Idle_Stand_Pant` or `Play_Bow_Excited` (`speed == 0`) | `Idle_Stand_Pant` or `Play_Bow_Excited` (`0.20s`) | Snappy `"Arf! Arf!"` double bark: anticipation crouch (`f8`), first chest-puff hop + jaw snap (`f12`), recoil (`f17`), second bigger bark (`f24`), and settle (`f40`). |
-| **6** | `Give_Paw_Trick` | Sitting | `1–48` | `2.00s` | One-Shot | Must be in `Idle_Sit_Smile` (`speed == 0`) | `Idle_Sit_Smile` (`0.25s`) | Sits politely, tilts head happily, and raises its right front white-socked paw (`Leg_Front_Upper.R`) high forward with a gentle paw wave. |
-| **7** | `Play_Bow_Excited` | Standing | `1–48` | `2.00s` | Loop / Hold | `Idle_Stand_Pant` (`speed == 0`, player holding ball/washer) | `Run_Fetch_Gallop` (`0.15s`), `Speak_Double_Bark` (`0.20s`), or `Idle_Stand_Pant` (`0.25s`) | **Fetch Ready Pose.** Drops front elbows and forearms flat to the ground (`Z = 0.02 m`) while keeping rear hips high in the air, bouncing and wagging rapidly. |
-| **8** | `Pickup_Drop_Ball` | Standing | `1–36` | `1.50s` | One-Shot | Must decelerate to `Idle_Stand_Pant` (`speed == 0`) over ball | `Idle_Stand_Pant` (`0.20s`) -> then `Walk_Jaunty_Trot` / `Run_Fetch_Gallop` | Flexes front elbows (`f10`), opens jaw wide over the ground, clamps jaw onto the ball (`f15`), and lifts head proudly (`f25`) before returning to standing. |
-| **9** | `Walk_Jaunty_Trot` | Locomotion | `1–24` | `1.00s` | Loop | Blend with `Idle_Stand_Pant` (`speed: 0.0 -> 0.5`) | `Idle_Stand_Pant` (`speed -> 0.0`, `0.20s`) or `Run_Fetch_Gallop` (`speed -> 1.0`, `0.20s`) | Bouncy diagonal 4-legged Shiba trot (`Front.L + Back.R` alternating with `Front.R + Back.L`) with natural wrist/hock flexion during leg lift. |
+| **6** | `Give_Paw_Trick` | Sitting | `1–48` | `2.00s` | One-Shot | Must be in `Idle_Sit_Smile` (`speed == 0`) | `Idle_Sit_Smile` (`0.25s`) | Sits politely, tilts head happily, and raises its right front white-socked paw (`Leg_Front_Upper.R`) high forward with a gentle paw wave while left front paw stays grounded (`Z = 0.012 m`). |
+| **7** | `Play_Bow_Excited` | Standing | `1–48` | `2.00s` | Loop / Hold | `Idle_Stand_Pant` (`speed == 0`, player holding Toy Bone) | `Run_Fetch_Gallop` (`0.15s`), `Speak_Double_Bark` (`0.20s`), or `Idle_Stand_Pant` (`0.25s`) | **Fetch Ready Pose.** Drops front elbows and forearms flat to the ground (`Z = 0.02 m`) while keeping rear hips high in the air, bouncing and wagging rapidly. |
+| **8** | `Pickup_Drop_Ball` | Standing | `1–36` | `1.50s` | One-Shot | Must decelerate to `Idle_Stand_Pant` (`speed == 0`) behind Toy Bone | `Idle_Stand_Pant` (`0.20s`) -> then `Walk_Jaunty_Trot` / `Run_Fetch_Gallop` | Flexes front elbows (`f10`), opens jaw wide (`30°`), lowers `Mouth_Socket` right to ground level (`Z = 0.055 m` at **Frame 15 / `0.625s`**) and clamps jaw (`16°`) onto `cozy_shiba_toy_bone`, then lifts head proudly (`f25`) while all 4 paws stay grounded (`Z = 0.012 m`). |
+| **9** | `Walk_Jaunty_Trot` | Locomotion | `1–24` | `1.00s` | Loop | Blend with `Idle_Stand_Pant` (`speed: 0.0 -> 0.5`) | `Idle_Stand_Pant` (`speed -> 0.0`, `0.20s`) or `Run_Fetch_Gallop` (`speed -> 1.0`, `0.20s`) | Bouncy diagonal 4-legged Shiba trot (`Front.L + Back.R` alternating with `Front.R + Back.L`) with jaw open (`12°–13°`) so carried fetch toys fit cleanly. |
 | **10** | `Run_Fetch_Gallop` | Locomotion | `1–18` | `0.75s` | Loop | From `Walk_Jaunty_Trot` (`speed: 0.5 -> 1.0`) or `Play_Bow_Excited` (launch!) | **Must decelerate through `Walk_Jaunty_Trot` -> `Idle_Stand_Pant`** (`0.25s`) | High-speed bounding gallop with full spine flexion/extension, ears pinned back in the wind, and clean mid-air suspension clearance. |
 | **11** | `Play_Chomp_Spray` | Standing | `1–48` | `2.00s` | One-Shot | `Idle_Stand_Pant` or `Play_Bow_Excited` (when hit by gentle water mist) | `Shake_Off_Water` (`0.20s` chain) or `Idle_Stand_Pant` (`0.25s`) | Rears up playfully on its hind legs and snaps/chomps its jaw left and right (`3` big mid-air chomps) trying to catch the power-washer water spray. |
-| **12** | `Shake_Off_Water` | Standing | `1–48` | `2.00s` | One-Shot | `Idle_Stand_Pant` or right after `Play_Chomp_Spray` (`speed == 0`) | `Idle_Stand_Pant` (`0.25s`) | Wide-stance crouch with a phase-delayed, high-frequency axial roll around the spine (`World Y`) rippling from `Head -> Neck -> Chest -> Hips -> Tail`. |
-| **13** | `Scratch_Ear_Itch` | Sitting | `1–54` | `2.25s` | One-Shot | **Must be in `Idle_Sit_Smile` (`speed == 0`)** | `Idle_Sit_Smile` (`0.25s`) | Random idle quirk while sitting: tilts head and right ear down toward the right shoulder, squints `Eyelid.R`, and reaches `Leg_Back_Upper.R` forward & outward to rapidly scratch behind `Ear.R`. |
+| **12** | `Shake_Off_Water` | Standing | `1–48` | `2.00s` | One-Shot | `Idle_Stand_Pant` or right after `Play_Chomp_Spray` (`speed == 0`) | `Idle_Stand_Pant` (`0.25s`) | Graceful phase-delayed axial ripple (`~35°` cumulative peak) from `Head -> Neck -> Chest -> Hips -> Tail` while all 4 paws stay 100% flat on the floor (`Z = 0.012 m`, zero paw tilt). |
+| **13** | `Scratch_Ear_Itch` | Sitting | `1–54` | `2.25s` | One-Shot | **Must be in `Idle_Sit_Smile` (`speed == 0`)** | `Idle_Sit_Smile` (`0.25s`) | Random idle quirk while sitting: tilts head and right ear down toward the right shoulder, squints `Eyelid.R`, and reaches `Leg_Back_Upper.R` forward & outward to rapidly scratch behind `Ear.R` while both front paws stay grounded (`Z = 0.012 m`). |
 | **14** | `Sniff_Find_Dirt` | Standing | `1–60` | `2.50s` | One-Shot | `Idle_Stand_Pant` or `Walk_Jaunty_Trot` (after stopping at `speed == 0`) | `Idle_Stand_Pant` (`0.25s`) or `Speak_Double_Bark` (to alert player!) | First `65%` (`f1–39`): lowers nose to the floor sweeping left and right sniffing for dirt. Last `35%` (`f40–60`): perks ears up and raises front left paw (`Paw_Front.L`) pointing at the dirt spot! |
 | **15** | `Sleep_Curl_Nap` | Ground (Belly) | `1–84` | `3.50s` | Loop | From `Idle_Sit_Smile` (`0.50s` settle) after long idle timeout (`> 20s`) | `Idle_Sit_Smile` (`0.45s` wake-up blend) | Lies flat on its belly (`Hips dz = -0.27 m`) with all 4 legs tucked naturally on the floor, head curled toward tail, eyes shut (`Eyelid.L/R`), slow breathing, and a cute ear twitch at `f31–37`. |
 
@@ -129,12 +128,12 @@ stateDiagram-v2
     Run_Fetch_Gallop --> Walk_Jaunty_Trot : speed < 0.65 (0.20s)
 
     %% Standing Action Transitions
-    StandHub --> Play_Bow_Excited : Player Holds Ball (0.25s)
-    Play_Bow_Excited --> Run_Fetch_Gallop : Ball Thrown! (0.15s Launch)
+    StandHub --> Play_Bow_Excited : Player Holds Toy Bone (0.25s)
+    Play_Bow_Excited --> Run_Fetch_Gallop : Bone Thrown! (0.15s Launch)
     Play_Bow_Excited --> Speak_Double_Bark : Impatient Bark (0.20s)
     Play_Bow_Excited --> StandHub : Cancel Fetch (0.25s)
 
-    StandHub --> Pickup_Drop_Ball : At Ball / Player Feet (0.20s, speed == 0)
+    StandHub --> Pickup_Drop_Ball : At Bone / Player Feet (0.20s, speed == 0)
     Pickup_Drop_Ball --> StandHub : Clip Ends (0.20s)
 
     StandHub --> Speak_Double_Bark : Call Dog / Alert (0.20s)
@@ -155,13 +154,48 @@ stateDiagram-v2
 
 To make the Shiba Inu feel like a believable living creature in your game engine (Godot, Unity, Unreal), use these multi-step transition chains for core gameplay loops:
 
-### 5.1 Playing Fetch (`Throw -> Chase -> Grab -> Return -> Drop`)
-1. **Ready Stance:** `Idle_Stand_Pant` $\xrightarrow{0.25\text{s}}$ `Play_Bow_Excited` (while the player aims the ball; optionally trigger `Speak_Double_Bark` if the player holds the ball for more than 4 seconds).
-2. **Launch & Chase:** `Play_Bow_Excited` $\xrightarrow{0.15\text{s}}$ `Run_Fetch_Gallop` (as soon as the ball is thrown—the low front chest of `Play_Bow_Excited` springs naturally into frame 1 of `Run_Fetch_Gallop`!).
-3. **Approach & Stop at Ball:** `Run_Fetch_Gallop` $\xrightarrow{0.20\text{s}}$ `Walk_Jaunty_Trot` $\xrightarrow{0.20\text{s}}$ `Idle_Stand_Pant` (decelerate over the last `1.5 m` before reaching the ball).
-4. **Pick Up Ball:** `Idle_Stand_Pant` $\xrightarrow{0.20\text{s}}$ `Pickup_Drop_Ball` (attach the ball mesh to the `Jaw` or `Snout` socket at **Frame 15** when the jaw clamps shut).
-5. **Return to Player:** `Pickup_Drop_Ball` $\xrightarrow{0.20\text{s}}$ `Idle_Stand_Pant` $\xrightarrow{0.20\text{s}}$ `Walk_Jaunty_Trot` (or `Run_Fetch_Gallop`) back to the player's feet, then decelerate to `Idle_Stand_Pant`.
-6. **Drop Ball & Sit Proudly:** `Idle_Stand_Pant` $\xrightarrow{0.20\text{s}}$ `Pickup_Drop_Ball` (detach the ball at **Frame 10** when the jaw opens wide) $\xrightarrow{0.20\text{s}}$ `Idle_Stand_Pant` $\xrightarrow{0.35\text{s}}$ `Idle_Sit_Smile`.
+### 5.1 Complete VR Fetch Guide (`cozy_shiba_toy_bone` + `Mouth_Socket`)
+
+| Frame 15 (`0.625s`) — Grabbing `cozy_shiba_toy_bone` on the Floor | Frame 25 (`1.04s`) — Carrying `cozy_shiba_toy_bone` in `Mouth_Socket` |
+| :---: | :---: |
+| ![Grabbing Toy Bone on Ground](shiba_inu_fetch_grab_preview.png) | ![Carrying Toy Bone in Jaws](shiba_inu_fetch_carry_preview.png) |
+
+#### How VR Fetch Works Under the Hood
+1. **Two Separate Assets:**
+   - **The Shiba Inu (`cozy_shiba_inu.glb` / `.fbx`):** Has a dedicated **`Mouth_Socket`** bone parented to `Head` at `(0.0, -0.425, 0.648)` right between the upper snout and lower jaw.
+   - **The Toy Bone (`cozy_shiba_toy_bone.glb` / `.fbx`):** A standalone physics prop (`ToyBone_Mesh`, `18.4 cm` wide) with its origin `(0, 0, 0)` at the center of the golden-amber grip shaft. Add a `Rigidbody`, a `BoxCollider` / `CapsuleCollider`, and a VR `XRGrabInteractable` (Unity) / `GrabComponent` (Unreal) / `XRToolsPickable` (Godot) to this object.
+2. **Step-by-Step VR Fetch Loop:**
+   - **Step 1 — Player Grabs & Throws the Bone:** While the player holds `cozy_shiba_toy_bone` in their VR hand, transition the Shiba from `Idle_Stand_Pant` $\xrightarrow{0.25\text{s}}$ `Play_Bow_Excited` (and optionally trigger `Speak_Double_Bark` if they hold it for `> 4s`).
+   - **Step 2 — Launch & Sprint to Bone:** When the player releases the VR trigger to throw the bone, transition `Play_Bow_Excited` $\xrightarrow{0.15\text{s}}$ `Run_Fetch_Gallop` and steer the dog's `NavMeshAgent` toward a point **`0.40 m` behind the bone** (since `Mouth_Socket` is at `Y = -0.40 m` in front of `Root` during the grab pose!).
+   - **Step 3 — Decelerate & Stop Behind Bone:** Over the last `1.2 m`, decelerate `Run_Fetch_Gallop` $\xrightarrow{0.20\text{s}}$ `Walk_Jaunty_Trot` $\xrightarrow{0.20\text{s}}$ `Idle_Stand_Pant` (`speed = 0`) facing the bone.
+   - **Step 4 — Play `Pickup_Drop_Ball` & Snap Bone at Frame 15 (`0.625s`):**
+     - Play `Pickup_Drop_Ball` (`36 frames`, `1.50s`).
+     - At **Frame 10 (`0.41s`)**, the Shiba bends its front legs and opens its `Jaw` wide (`30°`) right above the bone.
+     - At **Frame 15 (`0.625s`)**, `Mouth_Socket` reaches `Z = 0.055 m` on the ground and `Jaw` clamps down to `16°`. Fire an **Animation Event (`OnGrabFetchBone`)** at **Frame 15 (`0.625s`)** that disables physics on the Toy Bone and parents it to `Mouth_Socket` with zero local offset:
+       ```csharp
+       // Unity C# — Called by Animation Event at Frame 15 (0.625s) of Pickup_Drop_Ball
+       public void OnGrabFetchBone(Transform toyBone, Rigidbody boneRb, Collider boneCol, Transform mouthSocket)
+       {
+           boneRb.isKinematic = true;
+           boneCol.enabled = false;
+           toyBone.SetParent(mouthSocket, worldPositionStays: false);
+           toyBone.localPosition = Vector3.zero;
+           toyBone.localRotation = Quaternion.identity;
+       }
+       ```
+     - By **Frame 25 (`1.04s`)**, the Shiba proudly lifts its head (`Z = 0.69 m`) with the Toy Bone locked crosswise in its jaws!
+   - **Step 5 — Trot / Gallop Back to the Player:** Transition `Pickup_Drop_Ball` $\xrightarrow{0.20\text{s}}$ `Idle_Stand_Pant` $\xrightarrow{0.20\text{s}}$ `Walk_Jaunty_Trot` (or `Run_Fetch_Gallop`) back to the VR player. Because both `Walk_Jaunty_Trot` and `Run_Fetch_Gallop` keep the jaw slightly open (`12°–16°`) and `Mouth_Socket` is parented to `Head`, the Toy Bone automatically bounces and rides in the Shiba's mouth all the way back!
+   - **Step 6 — Drop Bone at Player's Feet & Sit Smiling:** Stop `0.8 m` in front of the VR player (`Idle_Stand_Pant`), play `Pickup_Drop_Ball` again, and at **Frame 15 (`0.625s`)** unparent the Toy Bone and re-enable physics:
+       ```csharp
+       // Unity C# — Called at Frame 15 (0.625s) when dropping the bone at the player's feet
+       public void OnDropFetchBone(Transform toyBone, Rigidbody boneRb, Collider boneCol)
+       {
+           toyBone.SetParent(null, worldPositionStays: true);
+           boneRb.isKinematic = false;
+           boneCol.enabled = true;
+       }
+       ```
+     - Then transition `Pickup_Drop_Ball` $\xrightarrow{0.20\text{s}}$ `Idle_Stand_Pant` $\xrightarrow{0.35\text{s}}$ `Idle_Sit_Smile` (and when the player reaches down to pet its head in VR, play **`Pet_Head_Bliss`** so the Shiba lifts its head up and gives a big doggy smile!).
 
 ### 5.2 What If You Want the Dog to Scratch Its Ear After Running?
 Never go `Run_Fetch_Gallop -> Scratch_Ear_Itch`. Always chain through the deceleration and sitting hubs:
