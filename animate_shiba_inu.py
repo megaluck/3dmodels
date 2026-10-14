@@ -48,14 +48,6 @@ def set_bone_world(name, world_rot_deg=(0.0, 0.0, 0.0), world_loc=(0.0, 0.0, 0.0
       +X = Dog's Left, -X = Dog's Right
       -Y = Dog's Front (Snout), +Y = Dog's Rear (Tail)
       +Z = Up, -Z = Down
-    Consequences of `world_rot_deg = (rx, ry, rz)`:
-      - Spine / Chest / Neck / Head / Jaw:
-          rx > 0 pitches DOWN (-Z); rx < 0 pitches UP (+Z)
-          ry > 0 rolls Left (+X) side UP / Right (-X) side DOWN
-          rz > 0 yaws Snout (-Y) toward Left (+X)
-      - Legs (Leg_Front_Upper/Lower, Leg_Back_Upper/Lower):
-          rx < 0 swings leg FORWARD (-Y); rx > 0 swings leg BACKWARD (+Y)
-          ry > 0 swings leg Toward Right (-X); ry < 0 swings leg Toward Left (+X)
     """
     pb = pbones.get(name)
     if not pb:
@@ -70,6 +62,52 @@ def set_bone_world(name, world_rot_deg=(0.0, 0.0, 0.0), world_loc=(0.0, 0.0, 0.0
     pb.rotation_euler = R_local.to_euler('XYZ')
     if world_loc != (0.0, 0.0, 0.0):
         pb.location = M_rest.transposed() @ Vector(world_loc)
+
+def set_bone_abs_world(pb, wrx, wry=0.0, wrz=0.0):
+    """
+    Sets a pose bone's absolute world-space rotation relative to its rest orientation,
+    canceling any parent spine/chest roll or yaw so planted legs and paws never tilt!
+    """
+    M_rest = pb.bone.matrix_local.to_3x3()
+    R_world = Euler((math.radians(wrx), math.radians(wry), math.radians(wrz)), 'XYZ').to_matrix()
+    M_target_world = R_world @ M_rest
+    M4 = pb.matrix.copy()
+    M4.col[0][:3] = M_target_world.col[0]
+    M4.col[1][:3] = M_target_world.col[1]
+    M4.col[2][:3] = M_target_world.col[2]
+    pb.matrix = M4
+    bpy.context.view_layer.update()
+
+def plant_leg_world(prefix, side, target_paw_tail_z=0.012, outward_deg=0.0, forward_lean_deg=0.0):
+    """
+    Solves the exact sagittal elbow/hock bend angle (`mid` in `[0, 65]` deg) after updating
+    the view layer so that:
+      1) Upper, Lower, and Paw have ZERO unwanted world roll or yaw (`wry = outward_deg`, `wrz = 0`),
+         meaning the paw stays 100% level and never tilts when the body shakes or leans!
+      2) `Paw.tail.z` rests at `target_paw_tail_z` (`0.012 m`, right on the floor) and never goes underground!
+    """
+    bpy.context.view_layer.update()
+    pu = pbones[f"Leg_{prefix}_Upper.{side}"]
+    pl = pbones[f"Leg_{prefix}_Lower.{side}"]
+    pp = pbones[f"Paw_{prefix}.{side}"]
+
+    # Test straight leg (mid = 0)
+    set_bone_abs_world(pu, forward_lean_deg, outward_deg, 0.0)
+    set_bone_abs_world(pl, forward_lean_deg, outward_deg, 0.0)
+    set_bone_abs_world(pp, 0.0, 0.0, 0.0)
+    if pp.tail.z >= target_paw_tail_z:
+        return
+
+    lo, hi = 0.0, 65.0
+    for _ in range(10):
+        mid = 0.5 * (lo + hi)
+        set_bone_abs_world(pu, forward_lean_deg + mid, outward_deg, 0.0)
+        set_bone_abs_world(pl, forward_lean_deg - mid, outward_deg, 0.0)
+        set_bone_abs_world(pp, 0.0, 0.0, 0.0)
+        if pp.tail.z < target_paw_tail_z:
+            lo = mid
+        else:
+            hi = mid
 
 def key_all_bones(frame):
     for pb in pbones:
@@ -89,26 +127,24 @@ def set_linear_or_bezier(action, cyclic=False):
 def apply_sit_base_pose():
     """
     Sets the polite sitting Shiba Inu posture matching the user's reference screenshot:
-    - Rear hips lowered (`Hips` loc z = -0.175, rot x = -38 deg)
-    - Spine & Chest pitched proudly upright (`Spine` rot x = +20, `Chest` rot x = +18)
-    - Back legs folded neatly on the ground with white paws forward
-    - Front legs planted straight and proud in front
+    - Rear hips lowered (`Hips` world_loc z = -0.175, world_rot x = -38 deg)
+    - Spine (+6 deg) & Chest (+6 deg) keep the chest proudly upright so shoulders are at natural height
+    - Back legs folded neatly on the ground (`Paw_Back.tail.z = 0.044 m`)
+    - Front legs planted cleanly on the ground via `plant_leg_world` (`Paw_Front.tail.z = 0.012 m`, NEVER underground!)
     """
     reset_pose()
-    set_bone("Hips",  loc=(0.0, 0.02, -0.175), rot_deg=(-38.0, 0.0, 0.0))
-    set_bone("Spine", rot_deg=(20.0, 0.0, 0.0))
-    set_bone("Chest", rot_deg=(18.0, 0.0, 0.0))
-    set_bone("Neck",  rot_deg=(4.0, 0.0, 0.0))
-    set_bone("Head",  rot_deg=(-4.0, 0.0, 0.0))
+    set_bone_world("Hips",  (-38.0, 0.0, 0.0), world_loc=(0.0, 0.02, -0.175))
+    set_bone_world("Spine", (6.0, 0.0, 0.0))
+    set_bone_world("Chest", (6.0, 0.0, 0.0))
+    set_bone_world("Neck",  (22.0, 0.0, 0.0))
+    set_bone_world("Head",  (2.0, 0.0, 0.0))
     for side, sx in [("L", 1.0), ("R", -1.0)]:
         # Folded hind legs resting on the floor
-        set_bone(f"Leg_Back_Upper.{side}", rot_deg=(76.0, 0.0, sx * -6.0))
-        set_bone(f"Leg_Back_Lower.{side}", rot_deg=(-112.0, 0.0, 0.0))
-        set_bone(f"Paw_Back.{side}",       rot_deg=(74.0, 0.0, 0.0))
-        # Upright front legs compensating for chest pitch and lowered hips
-        set_bone(f"Leg_Front_Upper.{side}", loc=(0.0, -0.02, -0.05), rot_deg=(6.0, 0.0, 0.0))
-        set_bone(f"Leg_Front_Lower.{side}", rot_deg=(-6.0, 0.0, 0.0))
-        set_bone(f"Paw_Front.{side}",       rot_deg=(0.0, 0.0, 0.0))
+        set_bone(f"Leg_Back_Upper.{side}", rot_deg=(54.0, 0.0, sx * -6.0))
+        set_bone(f"Leg_Back_Lower.{side}", rot_deg=(-98.0, 0.0, 0.0))
+        set_bone(f"Paw_Back.{side}",       rot_deg=(82.0, 0.0, 0.0))
+        # Upright front legs solved in world space to stay planted on Z = 0.012 m
+        plant_leg_world("Front", side, target_paw_tail_z=0.012, outward_deg=0.0)
 
 # Dictionary of (action_name, frame_end, builder_fn, is_loop)
 anim_specs = []
@@ -119,11 +155,11 @@ anim_specs = []
 def build_idle_sit_smile(act):
     frames = [1, 18, 36, 54, 72]
     head_tilts = [
-        (-4.0,  6.0,  4.0),  # f1: Cute Shiba head tilt like reference!
-        (-7.0, 12.0,  7.0),  # f18: Deeper curious head tilt + ear perk
-        (-4.0,  4.0,  2.0),  # f36: Center proud smile
-        (-6.0, -9.0, -5.0),  # f54: Tilt other way curiously
-        (-4.0,  6.0,  4.0),  # f72: Loop back cleanly
+        ( 2.0,  6.0,  4.0),  # f1: Cute Shiba head tilt like reference!
+        (-2.0, 12.0,  7.0),  # f18: Deeper curious head tilt + ear perk
+        ( 2.0,  4.0,  2.0),  # f36: Center proud smile
+        ( 0.0, -9.0, -5.0),  # f54: Tilt other way curiously
+        ( 2.0,  6.0,  4.0),  # f72: Loop back cleanly
     ]
     tail_sways = [0.0, 16.0, 0.0, -16.0, 0.0]
     breaths = [0.0, -2.5, 0.0, -2.5, 0.0]
@@ -134,7 +170,8 @@ def build_idle_sit_smile(act):
         br = breaths[idx]
         ht = head_tilts[idx]
         ts = tail_sways[idx]
-        set_bone_world("Chest", (18.0 + br, 0.0, 0.0))
+        set_bone_world("Chest", (6.0 + br, 0.0, 0.0))
+        set_bone_world("Neck",  (22.0 - br, 0.0, 0.0))
         set_bone_world("Head",  ht)
         set_bone_world("Ear.L", (-4.0, 5.0 if idx == 1 else 0.0, 0.0))
         set_bone_world("Ear.R", (-4.0, -5.0 if idx == 3 else 0.0, 0.0))
@@ -142,6 +179,9 @@ def build_idle_sit_smile(act):
         set_bone("Brow.R", loc=(0.0, 0.0, 0.004 if idx in (1, 3) else 0.0))
         set_bone_world("Tail_Base", (-8.0, ts, ts * 0.6))
         set_bone_world("Tail_Mid",  (0.0, ts * 0.8, 0.0))
+        # Re-plant front paws after breathing chest adjustment so they never dip below Z = 0.012m!
+        for side in ("L", "R"):
+            plant_leg_world("Front", side, target_paw_tail_z=0.012, outward_deg=0.0)
         key_all_bones(f)
 
 anim_specs.append(("Idle_Sit_Smile", 72, build_idle_sit_smile, True))
@@ -158,13 +198,16 @@ def build_idle_stand_pant(act):
         wag  = math.sin(t * 4.0 * math.pi) # 2 tail wags per cycle
         breath = math.sin(t * 2.0 * math.pi)
 
-        set_bone_world("Hips",  (0.0, 0.0, 0.0), world_loc=(0.0, 0.0, 0.008 * breath))
-        set_bone_world("Chest", (-2.5 * breath, 0.0, 0.0))
+        set_bone_world("Hips",  (0.0, 0.0, 0.0), world_loc=(0.0, 0.0, -0.006 + 0.006 * breath))
+        set_bone_world("Chest", (-2.0 * breath, 0.0, 0.0))
         set_bone_world("Head",  (-4.0 - 2.0 * breath, 4.0 * wag, 3.0 * wag))
         set_bone_world("Jaw",   (14.0 + 7.0 * pant, 0.0, 0.0))
         set_bone("Tongue", loc=(0.0, -0.012 - 0.006 * max(0.0, pant), -0.004), rot_deg=(8.0, 0.0, 0.0))
         set_bone_world("Tail_Base", (-6.0, 18.0 * wag, 14.0 * wag))
         set_bone_world("Tail_Mid",  (0.0, 14.0 * wag, 10.0 * wag))
+        for side in ("L", "R"):
+            plant_leg_world("Front", side, target_paw_tail_z=0.012)
+            plant_leg_world("Back",  side, target_paw_tail_z=0.012)
         key_all_bones(f)
 
 anim_specs.append(("Idle_Stand_Pant", 60, build_idle_stand_pant, True))
@@ -183,8 +226,8 @@ def build_pet_head_bliss(act):
         wag = math.sin(t * 8.0 * math.pi) # Fast happy tail wag!
         nuzzle = math.sin(t * 4.0 * math.pi)
 
-        set_bone_world("Neck",  (8.0 * envelope, 0.0, 0.0))
-        set_bone_world("Head",  (-16.0 * envelope, 8.0 * nuzzle * envelope, 5.0 * nuzzle * envelope))
+        set_bone_world("Neck",  (22.0 + 6.0 * envelope, 0.0, 0.0))
+        set_bone_world("Head",  (2.0 - 16.0 * envelope, 8.0 * nuzzle * envelope, 5.0 * nuzzle * envelope))
         # Airplane ears folded happily back & out!
         set_bone_world("Ear.L", (-24.0 * envelope, 34.0 * envelope, 12.0 * envelope))
         set_bone_world("Ear.R", (-24.0 * envelope, -34.0 * envelope, -12.0 * envelope))
@@ -199,6 +242,8 @@ def build_pet_head_bliss(act):
         # Rapid tail wag
         set_bone_world("Tail_Base", (-10.0, 24.0 * wag, 18.0 * wag))
         set_bone_world("Tail_Mid",  (0.0, 18.0 * wag, 12.0 * wag))
+        for side in ("L", "R"):
+            plant_leg_world("Front", side, target_paw_tail_z=0.012, outward_deg=0.0)
         key_all_bones(f)
 
 anim_specs.append(("Pet_Head_Bliss", 60, build_pet_head_bliss, True))
@@ -286,8 +331,8 @@ def build_speak_double_bark(act):
         set_bone("Brow.L", loc=(0.0, 0.0, 0.006 if jrx > 15 else 0.0))
         set_bone("Brow.R", loc=(0.0, 0.0, 0.006 if jrx > 15 else 0.0))
         for side in ("L", "R"):
-            set_bone_world(f"Leg_Front_Upper.{side}", (crx * 0.8, 0.0, 0.0))
-            set_bone_world(f"Leg_Front_Lower.{side}", (-crx * 0.8, 0.0, 0.0))
+            plant_leg_world("Front", side, target_paw_tail_z=0.012)
+            plant_leg_world("Back",  side, target_paw_tail_z=0.012)
         set_bone_world("Tail_Base", (-12.0 if jrx > 15 else 0.0, tw, tw * 0.6))
         key_all_bones(f)
 
@@ -310,13 +355,18 @@ def build_give_paw_trick(act):
             lift = 1.0
         wave = math.sin(t * 4.0 * math.pi) * lift
 
-        set_bone_world("Head", (-6.0 * lift, 10.0 * lift, 6.0 * lift))
+        set_bone_world("Head", (2.0 - 6.0 * lift, 10.0 * lift, 6.0 * lift))
         set_bone_world("Jaw",  (12.0 * lift, 0.0, 0.0))
-        # Raise Right Front Leg high forward + gentle paw wave
-        set_bone("Leg_Front_Upper.R", loc=(0.0, -0.02, -0.04), rot_deg=(-72.0 * lift + 8.0 * wave, 0.0, -8.0 * lift))
-        set_bone("Leg_Front_Lower.R", rot_deg=(28.0 * lift - 12.0 * wave, 0.0, 0.0))
-        set_bone("Paw_Front.R",       rot_deg=(25.0 * lift + 15.0 * wave, 0.0, 0.0))
-        set_bone_world("Tail_Base",   (-8.0, 20.0 * wave, 14.0 * wave))
+        # Left front leg stays firmly planted on the ground!
+        plant_leg_world("Front", "L", target_paw_tail_z=0.012, outward_deg=0.0)
+        # Right front leg lifts smoothly from planted (at lift=0) to high forward paw-shake (at lift=1)
+        if lift < 0.05:
+            plant_leg_world("Front", "R", target_paw_tail_z=0.012, outward_deg=0.0)
+        else:
+            set_bone_world("Leg_Front_Upper.R", ((1.0 - lift) * 18.0 + lift * (-64.0 + 8.0 * wave), -8.0 * lift, 0.0))
+            set_bone_world("Leg_Front_Lower.R", ((1.0 - lift) * (-6.0) + lift * (24.0 - 12.0 * wave), 0.0, 0.0))
+            set_bone_world("Paw_Front.R",       ((1.0 - lift) * 14.0 + lift * (25.0 + 15.0 * wave), 0.0, 0.0))
+        set_bone_world("Tail_Base", (-8.0, 20.0 * wave, 14.0 * wave))
         key_all_bones(f)
 
 anim_specs.append(("Give_Paw_Trick", 48, build_give_paw_trick, False))
@@ -348,10 +398,8 @@ def build_play_bow_excited(act):
             set_bone_world(f"Leg_Front_Upper.{side}", (-82.0 * bow, sx * -6.0 * bow, 0.0))
             set_bone_world(f"Leg_Front_Lower.{side}", (-48.0 * bow, 0.0, 0.0))
             set_bone_world(f"Paw_Front.{side}",       (65.0 * bow, 0.0, 0.0))
-            # Back legs standing tall
-            set_bone_world(f"Leg_Back_Upper.{side}",  (-24.0 * bow, 0.0, 0.0))
-            set_bone_world(f"Leg_Back_Lower.{side}",  (6.0 * bow, 0.0, 0.0))
-            set_bone_world(f"Paw_Back.{side}",        (-6.0 * bow, 0.0, 0.0))
+            # Back legs standing tall & planted
+            plant_leg_world("Back", side, target_paw_tail_z=0.012, outward_deg=0.0)
 
         set_bone_world("Tail_Base", (-18.0 * bow, 28.0 * wag, 22.0 * wag))
         set_bone_world("Tail_Mid",  (0.0, 22.0 * wag, 14.0 * wag))
@@ -375,19 +423,15 @@ def build_pickup_drop_ball(act):
     for f, r_env, jrx, l_env in kfs:
         scene.frame_set(f)
         reset_pose()
-        set_bone_world("Hips",  (10.0 * r_env - 4.0 * l_env, 0.0, 0.0), world_loc=(0.0, 0.0, 0.02 * r_env + 0.015 * l_env))
+        set_bone_world("Hips",  (10.0 * r_env - 4.0 * l_env, 0.0, 0.0), world_loc=(0.0, 0.0, 0.01 * r_env + 0.010 * l_env))
         set_bone_world("Spine", (12.0 * r_env - 4.0 * l_env, 0.0, 0.0))
         set_bone_world("Chest", (10.0 * r_env - 4.0 * l_env, 0.0, 0.0))
         set_bone_world("Neck",  (24.0 * r_env - 10.0 * l_env, 0.0, 0.0))
         set_bone_world("Head",  (2.0 * r_env - 12.0 * l_env, 0.0, 0.0))
         set_bone_world("Jaw",   (jrx, 0.0, 0.0))
         for side in ("L", "R"):
-            set_bone_world(f"Leg_Front_Upper.{side}", (18.0 * r_env + 4.0 * l_env, 0.0, 0.0))
-            set_bone_world(f"Leg_Front_Lower.{side}", (-78.0 * r_env - 4.0 * l_env, 0.0, 0.0))
-            set_bone_world(f"Paw_Front.{side}",       (28.0 * r_env, 0.0, 0.0))
-            set_bone_world(f"Leg_Back_Upper.{side}",  (-10.0 * r_env, 0.0, 0.0))
-            set_bone_world(f"Leg_Back_Lower.{side}",  (4.0 * r_env, 0.0, 0.0))
-            set_bone_world(f"Paw_Back.{side}",        (-4.0 * r_env, 0.0, 0.0))
+            plant_leg_world("Front", side, target_paw_tail_z=0.012)
+            plant_leg_world("Back",  side, target_paw_tail_z=0.012)
         set_bone_world("Tail_Base", (-12.0, 18.0 * l_env, 12.0 * l_env))
         key_all_bones(f)
 
@@ -395,10 +439,6 @@ anim_specs.append(("Pickup_Drop_Ball", 36, build_pickup_drop_ball, False))
 
 # ==============================================================================
 # 9. Walk_Jaunty_Trot (Frames 1..24, 1.0s Diagonal 4-Legged Trot Loop)
-#    Anatomically accurate canine diagonal trot:
-#    - Pair 1 (Front.L + Back.R) vs Pair 2 (Front.R + Back.L)
-#    - rx < 0 swings upper leg FORWARD (-Y); rx > 0 swings upper leg BACKWARD (+Y)
-#    - During lift phase (c > 0), lower leg flexes backward (+rx) to clear the ground cleanly!
 # ==============================================================================
 def build_walk_jaunty_trot(act):
     for f in range(1, 25, 2):
@@ -424,7 +464,6 @@ def build_walk_jaunty_trot(act):
         set_bone_world("Tail_Mid",  (0.0, 14.0 * s1, 8.0 * s1))
 
         # Diagonal Pair 1: Front Left & Back Right
-        # When s1 > 0, leg swings FORWARD (rx = -22 * s1); when c1 > 0 (mid-swing lift), lower leg flexes (+26 * c1)
         set_bone_world("Leg_Front_Upper.L", (-22.0 * s1, 0.0, 0.0))
         set_bone_world("Leg_Front_Lower.L", (26.0 * max(0.0, c1) + 6.0 * max(0.0, -s1), 0.0, 0.0))
         set_bone_world("Paw_Front.L",       (12.0 * s1 - 16.0 * max(0.0, c1), 0.0, 0.0))
@@ -448,7 +487,6 @@ anim_specs.append(("Walk_Jaunty_Trot", 24, build_walk_jaunty_trot, True))
 
 # ==============================================================================
 # 10. Run_Fetch_Gallop (Frames 1..18, 0.75s Fast Bouncy Gallop Loop)
-#      Bounding canine gallop with clean clearance between front and back legs!
 # ==============================================================================
 def build_run_fetch_gallop(act):
     for f in range(1, 19, 2):
@@ -458,9 +496,6 @@ def build_run_fetch_gallop(act):
         s = math.sin(phase)
         c = math.cos(phase)
 
-        # Spine flexes and extends dynamically during gallop:
-        # When s > 0 (extended reach): Front legs reach forward (-rx), Back legs push backward (+rx)
-        # When s < 0 (gathered suspension): Front legs swing back (+20 deg max), Back legs swing forward (-20 deg max)
         set_bone_world("Hips",  (10.0 * s, 0.0, 0.0), world_loc=(0.0, 0.0, 0.045 * c + 0.015))
         set_bone_world("Spine", (-10.0 * c, 0.0, 0.0))
         set_bone_world("Chest", (-8.0 * s, 0.0, 0.0))
@@ -478,14 +513,12 @@ def build_run_fetch_gallop(act):
             sb = math.sin(phase + offset)
             cb = math.cos(phase + offset)
 
-            # Front leg: reaches far forward (-34 deg) when sf > 0, swings moderately back (+20 deg) when sf < 0
             f_upper_rx = -34.0 * sf if sf > 0 else -20.0 * sf
             f_lower_rx = 36.0 * max(0.0, cf) + 12.0 * max(0.0, -sf)
             set_bone_world(f"Leg_Front_Upper.{side}", (f_upper_rx, 0.0, 0.0))
             set_bone_world(f"Leg_Front_Lower.{side}", (f_lower_rx, 0.0, 0.0))
             set_bone_world(f"Paw_Front.{side}",       (14.0 * sf - 18.0 * max(0.0, cf), 0.0, 0.0))
 
-            # Back leg: pushes far backward (+34 deg) when sb > 0, gathers moderately forward (-20 deg) when sb < 0
             b_upper_rx = 34.0 * sb if sb > 0 else 20.0 * sb
             b_lower_rx = 32.0 * max(0.0, -cb) + 10.0 * max(0.0, -sb)
             set_bone_world(f"Leg_Back_Upper.{side}",  (b_upper_rx, 0.0, 0.0))
@@ -498,7 +531,6 @@ anim_specs.append(("Run_Fetch_Gallop", 18, build_run_fetch_gallop, True))
 
 # ==============================================================================
 # 11. Play_Chomp_Spray (Frames 1..48, 2.0s Power-Wash Spray Chomp!)
-#     Rears up playfully and snaps/chomps jaw left & right at water mist!
 # ==============================================================================
 def build_play_chomp_spray(act):
     for f in range(1, 49, 3):
@@ -533,8 +565,9 @@ def build_play_chomp_spray(act):
 anim_specs.append(("Play_Chomp_Spray", 48, build_play_chomp_spray, False))
 
 # ==============================================================================
-# 12. Shake_Off_Water (Frames 1..48, 2.0s Full-Body Ripple Shake!)
-#     Phase-delayed high-frequency axial roll around World Y from Head -> Tail!
+# 12. Shake_Off_Water (Frames 1..48, 2.0s Graceful Full-Body Ripple Shake!)
+#     Phase-delayed axial twist from Head -> Neck -> Chest -> Hips -> Tail while
+#     ALL 4 PAWS STAY 100% LEVEL & GROUNDED (`Paw.tail.z = 0.012 m`, zero paw tilt)!
 # ==============================================================================
 def build_shake_off_water(act):
     for f in range(1, 49, 2):
@@ -542,34 +575,33 @@ def build_shake_off_water(act):
         reset_pose()
         t = (f - 1) / 47.0
         env = math.sin(t * math.pi)
-        freq = t * 14.0 * math.pi # 7 rapid full-body shakes
+        freq = t * 12.0 * math.pi # 6 graceful full-body ripple waves
 
         w_head  = math.sin(freq) * env
         w_neck  = math.sin(freq - 0.5) * env
         w_chest = math.sin(freq - 1.0) * env
-        w_hips  = math.sin(freq - 1.6) * env
-        w_tail  = math.sin(freq - 2.2) * env
+        w_hips  = math.sin(freq - 1.5) * env
+        w_tail  = math.sin(freq - 2.0) * env
 
-        # Wide stance crouch while twisting axially around World Y (`ry`)
-        set_bone_world("Hips",  (0.0, 18.0 * w_hips, 5.0 * w_hips), world_loc=(0.0, 0.0, -0.025 * env))
-        set_bone_world("Spine", (4.0 * env, 20.0 * w_chest, 0.0))
-        set_bone_world("Chest", (6.0 * env, 22.0 * w_chest, 6.0 * w_chest))
-        set_bone_world("Neck",  (10.0 * env, 20.0 * w_neck, 8.0 * w_neck))
-        set_bone_world("Head",  (8.0 * env, 26.0 * w_head, 12.0 * w_head))
-        set_bone_world("Ear.L", (-10.0 * env, 32.0 * w_head, 18.0 * w_head))
-        set_bone_world("Ear.R", (-10.0 * env, 32.0 * w_head, 18.0 * w_head))
+        # Gentle crouch (-0.032m) while torso & head ripple gracefully around World Y (~35 deg cumulative peak)
+        set_bone_world("Hips",  (0.0, 5.0 * w_hips, 1.5 * w_hips), world_loc=(0.0, 0.0, -0.032 * env))
+        set_bone_world("Spine", (2.0 * env, 8.0 * w_chest, 0.0))
+        set_bone_world("Chest", (2.0 * env, 10.0 * w_chest, 3.0 * w_chest))
+        set_bone_world("Neck",  (4.0 * env, 8.0 * w_neck, 3.0 * w_neck))
+        set_bone_world("Head",  (2.0 * env, 10.0 * w_head, 4.0 * w_head))
+        set_bone_world("Ear.L", (-8.0 * env, 16.0 * w_head, 8.0 * w_head))
+        set_bone_world("Ear.R", (-8.0 * env, 16.0 * w_head, 8.0 * w_head))
         set_bone("Eyelid.L", loc=(0.0, -0.003 * env, -0.013 * env))
         set_bone("Eyelid.R", loc=(0.0, -0.003 * env, -0.013 * env))
-        set_bone_world("Jaw",   (10.0 * env, 8.0 * w_head, 0.0))
+        set_bone_world("Jaw",   (6.0 * env, 4.0 * w_head, 0.0))
 
+        # Plant all 4 legs in world space so paws stay 100% flat on the floor with zero tilting!
         for side, sx in [("L", 1.0), ("R", -1.0)]:
-            set_bone_world(f"Leg_Front_Upper.{side}", (-8.0 * env, sx * -8.0 * env, 0.0))
-            set_bone_world(f"Leg_Front_Lower.{side}", (14.0 * env, 0.0, 0.0))
-            set_bone_world(f"Leg_Back_Upper.{side}",  (-8.0 * env, sx * -8.0 * env, 0.0))
-            set_bone_world(f"Leg_Back_Lower.{side}",  (14.0 * env, 0.0, 0.0))
+            plant_leg_world("Front", side, target_paw_tail_z=0.012, outward_deg=sx * -3.5 * env)
+            plant_leg_world("Back",  side, target_paw_tail_z=0.012, outward_deg=sx * -3.5 * env)
 
-        set_bone_world("Tail_Base", (0.0, 32.0 * w_tail, 22.0 * w_tail))
-        set_bone_world("Tail_Mid",  (0.0, 26.0 * w_tail, 16.0 * w_tail))
+        set_bone_world("Tail_Base", (0.0, 22.0 * w_tail, 14.0 * w_tail))
+        set_bone_world("Tail_Mid",  (0.0, 18.0 * w_tail, 12.0 * w_tail))
         key_all_bones(f)
 
 anim_specs.append(("Shake_Off_Water", 48, build_shake_off_water, False))
@@ -577,7 +609,8 @@ anim_specs.append(("Shake_Off_Water", 48, build_shake_off_water, False))
 # ==============================================================================
 # 13. Scratch_Ear_Itch (Frames 1..54, 2.25s Sitting Hind-Leg Ear Scratch)
 #     Leans head down & right while Right Hind Leg reaches FORWARD (-rx) and
-#     OUTWARD (-X via rz = -22) so Paw_Back.R scratches right outside the cheek/ear!
+#     OUTWARD (-X via rz = -22) so Paw_Back.R scratches right outside the cheek/ear,
+#     and BOTH FRONT PAWS stay firmly planted on the floor (`Z = 0.012 m`)!
 # ==============================================================================
 def build_scratch_ear_itch(act):
     for f in range(1, 55, 3):
@@ -587,18 +620,22 @@ def build_scratch_ear_itch(act):
         env = math.sin(min(1.0, t * 4.0) * (math.pi / 2.0)) if t < 0.8 else math.cos((t - 0.8) / 0.2 * (math.pi / 2.0))
         scratch = math.sin(t * 14.0 * math.pi) * env # Rapid hind-paw thumping behind right ear!
 
-        set_bone_world("Spine", (20.0 - 4.0 * env, -4.0 * env, -3.0 * env))
-        set_bone_world("Chest", (18.0 - 6.0 * env, -5.0 * env, -4.0 * env))
-        set_bone_world("Neck",  (4.0 - 12.0 * env, -10.0 * env, -6.0 * env))
-        set_bone_world("Head",  (-4.0 - 2.0 * env + 4.0 * scratch, -16.0 * env, -8.0 * env))
-        set_bone_world("Ear.R", (12.0 * env + 10.0 * scratch, -26.0 * env, 0.0))
+        set_bone_world("Spine", (6.0 + 4.0 * env, -4.0 * env, -3.0 * env))
+        set_bone_world("Chest", (6.0 + 4.0 * env, -5.0 * env, -4.0 * env))
+        set_bone_world("Neck",  (22.0 - 8.0 * env, -12.0 * env, -6.0 * env))
+        set_bone_world("Head",  (2.0 + 6.0 * env + 4.0 * scratch, -18.0 * env, -8.0 * env))
+        set_bone_world("Ear.R", (14.0 * env + 10.0 * scratch, -26.0 * env, 0.0))
         set_bone("Eyelid.R", loc=(0.0, -0.003 * env, -0.014 * env))
         set_bone_world("Jaw",   (12.0 * env + 6.0 * abs(scratch), 0.0, 0.0))
 
-        # Interpolate Right Hind Leg from sitting pose (+76, -112, +74) to forward outward ear-scratch pose
-        u_rx = (1.0 - env) * 76.0  + env * (-82.0 + 12.0 * scratch)
-        l_rx = (1.0 - env) * (-112.0) + env * (-12.0 - 18.0 * scratch)
-        p_rx = (1.0 - env) * 74.0  + env * (-15.0 + 16.0 * scratch)
+        # Keep both front paws 100% level and grounded on the floor while the spine leans right!
+        for side in ("L", "R"):
+            plant_leg_world("Front", side, target_paw_tail_z=0.012, outward_deg=0.0)
+
+        # Interpolate Right Hind Leg from sitting pose (+54, -98, +82) to forward outward ear-scratch pose
+        u_rx = (1.0 - env) * 54.0  + env * (-84.0 + 12.0 * scratch)
+        l_rx = (1.0 - env) * (-98.0) + env * (-8.0 - 18.0 * scratch)
+        p_rx = (1.0 - env) * 82.0  + env * (-15.0 + 16.0 * scratch)
         set_bone_world("Leg_Back_Upper.R", (u_rx, 18.0 * env, -22.0 * env))
         set_bone_world("Leg_Back_Lower.R", (l_rx, 0.0, 0.0))
         set_bone_world("Paw_Back.R",       (p_rx, 0.0, 0.0))
@@ -621,7 +658,7 @@ def build_sniff_find_dirt(act):
             sweep = math.sin(st * 4.0 * math.pi) * env
             sniff_bob = abs(math.sin(st * 10.0 * math.pi)) * env
 
-            set_bone_world("Hips",  (10.0 * env, 0.0, 0.0), world_loc=(0.0, 0.0, 0.02 * env))
+            set_bone_world("Hips",  (10.0 * env, 0.0, 0.0), world_loc=(0.0, 0.0, 0.01 * env))
             set_bone_world("Spine", (10.0 * env, 0.0, 4.0 * sweep))
             set_bone_world("Chest", (10.0 * env, 0.0, 4.0 * sweep))
             set_bone_world("Neck",  (22.0 * env, 8.0 * sweep, 10.0 * sweep))
@@ -629,12 +666,8 @@ def build_sniff_find_dirt(act):
             set_bone_world("Ear.L", (10.0 * env, 0.0, 0.0))
             set_bone_world("Ear.R", (10.0 * env, 0.0, 0.0))
             for side in ("L", "R"):
-                set_bone_world(f"Leg_Front_Upper.{side}", (16.0 * env, 0.0, 0.0))
-                set_bone_world(f"Leg_Front_Lower.{side}", (-72.0 * env, 0.0, 0.0))
-                set_bone_world(f"Paw_Front.{side}",       (26.0 * env, 0.0, 0.0))
-                set_bone_world(f"Leg_Back_Upper.{side}",  (-10.0 * env, 0.0, 0.0))
-                set_bone_world(f"Leg_Back_Lower.{side}",  (4.0 * env, 0.0, 0.0))
-                set_bone_world(f"Paw_Back.{side}",        (-4.0 * env, 0.0, 0.0))
+                plant_leg_world("Front", side, target_paw_tail_z=0.012)
+                plant_leg_world("Back",  side, target_paw_tail_z=0.012)
             set_bone_world("Tail_Base", (-10.0, 18.0 * sweep, 12.0 * sweep))
         else:
             pt = (t - 0.65) / 0.35
@@ -646,6 +679,9 @@ def build_sniff_find_dirt(act):
             set_bone_world("Leg_Front_Upper.L", (-42.0 * alert, 0.0, 0.0))
             set_bone_world("Leg_Front_Lower.L", (64.0 * alert, 0.0, 0.0))
             set_bone_world("Paw_Front.L",       (28.0 * alert, 0.0, 0.0))
+            plant_leg_world("Front", "R", target_paw_tail_z=0.012)
+            for side in ("L", "R"):
+                plant_leg_world("Back", side, target_paw_tail_z=0.012)
             set_bone_world("Tail_Base",         (-16.0 * alert, 0.0, 0.0))
         key_all_bones(f)
 
@@ -653,7 +689,6 @@ anim_specs.append(("Sniff_Find_Dirt", 60, build_sniff_find_dirt, False))
 
 # ==============================================================================
 # 15. Sleep_Curl_Nap (Frames 1..84, 3.5s Cozy Sleeping Loop)
-#     Lies flat on belly with all 4 legs folded naturally on the floor, head curled!
 # ==============================================================================
 def build_sleep_curl_nap(act):
     for f in range(1, 85, 6):
@@ -776,4 +811,4 @@ except Exception as e:
     print("UI registration note:", e)
 
 bpy.context.view_layer.update()
-print("All 15 Shiba Inu animations rebuilt with world-to-local kinematics & set to Idle_Sit_Smile!")
+print("All 15 Shiba Inu animations rebuilt with 100% grounded world-space paw solver!")
